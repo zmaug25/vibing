@@ -7,3 +7,5 @@ Start here:
 2) Create your folder: `mkdir projects/<your-project>`
 3) Add something small (e.g., a README) and commit/push.
 4) Open a Pull Request to `main`.
+
+If you haven't cloned yet, see the "Getting Started" guide shared in chat.
