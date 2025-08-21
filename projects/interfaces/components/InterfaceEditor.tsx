@@ -34,7 +34,7 @@ export default function InterfaceEditor({ interfaceConfig, onBack }: InterfaceEd
 
   const downloadPNG = async () => {
     if (!frameRef.current) return;
-    
+
     setIsExporting(true);
     try {
       const canvas = await html2canvas(frameRef.current, {
@@ -46,11 +46,34 @@ export default function InterfaceEditor({ interfaceConfig, onBack }: InterfaceEd
         imageTimeout: 0,
         removeContainer: true,
       });
-      
-      const link = document.createElement('a');
-      link.download = `${interfaceConfig.id}-interface.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+
+      const fileName = `${interfaceConfig.id}-interface.png`;
+
+      const triggerDownload = (href: string) => {
+        const a = document.createElement('a');
+        a.href = href;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      };
+
+      if (canvas.toBlob) {
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            // Fallback to data URL if blob failed
+            const dataUrl = canvas.toDataURL('image/png');
+            triggerDownload(dataUrl);
+            return;
+          }
+          const url = URL.createObjectURL(blob);
+          triggerDownload(url);
+          URL.revokeObjectURL(url);
+        }, 'image/png');
+      } else {
+        const dataUrl = canvas.toDataURL('image/png');
+        triggerDownload(dataUrl);
+      }
     } catch (error) {
       console.error('Error generating PNG:', error);
       alert('Error generating PNG. Please try again.');
