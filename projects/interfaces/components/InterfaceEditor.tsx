@@ -171,10 +171,8 @@ export default function InterfaceEditor({ interfaceConfig, onBack }: InterfaceEd
 
           {/* Preview Panel */}
           <div className={`${isEditing ? '' : 'col-span-2'} flex justify-center`}>
-            <div className="bg-white p-8 rounded-lg shadow-lg inline-block">
-              <div ref={frameRef}>
-                {renderInterface()}
-              </div>
+            <div ref={frameRef} className="bg-white p-8 rounded-lg shadow-lg inline-block">
+              {renderInterface()}
             </div>
           </div>
         </div>
