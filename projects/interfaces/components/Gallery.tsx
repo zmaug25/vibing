@@ -5,12 +5,14 @@ import { Edit2, Sparkles } from 'lucide-react';
 import { interfaceConfigs, InterfaceConfig } from '../data/interfaces';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import AIContextModal from './AIContextModal';
+import { generateContextualTexts, TextElement } from '../utils/openai';
 
 interface GalleryProps {
   onSelectInterface: (config: InterfaceConfig) => void;
+  onAICustomization?: (context: string, generatedTexts: Record<string, string>) => void;
 }
 
-export default function Gallery({ onSelectInterface }: GalleryProps) {
+export default function Gallery({ onSelectInterface, onAICustomization }: GalleryProps) {
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
 
   // Group interfaces by category
@@ -23,9 +25,41 @@ export default function Gallery({ onSelectInterface }: GalleryProps) {
   }, {} as Record<string, InterfaceConfig[]>);
 
   const handleAICustomization = async (context: string) => {
-    console.log('AI Customization context:', context);
-    // TODO: Implement AI customization logic
-    alert(`AI customization requested with context: "${context}"`);
+    try {
+      // Generate texts for all interfaces
+      const allGeneratedTexts: Record<string, string> = {};
+      
+      for (const config of interfaceConfigs) {
+        const textElements: TextElement[] = config.defaultTexts.map(text => ({
+          id: text.id,
+          label: text.label,
+          value: text.value
+        }));
+        
+        const generatedTexts = await generateContextualTexts(
+          context,
+          config.id,
+          textElements
+        );
+        
+        // Merge generated texts with interface prefix
+        Object.entries(generatedTexts).forEach(([textId, value]) => {
+          allGeneratedTexts[`${config.id}_${textId}`] = value;
+        });
+      }
+      
+      // Call the callback if provided
+      if (onAICustomization) {
+        onAICustomization(context, allGeneratedTexts);
+      }
+      
+      console.log('Generated texts for all interfaces:', allGeneratedTexts);
+      alert(`Successfully generated contextual text for ${interfaceConfigs.length} interfaces!`);
+      
+    } catch (error) {
+      console.error('AI customization failed:', error);
+      alert('Failed to generate contextual text. Please check your API key and try again.');
+    }
   };
 
   return (
