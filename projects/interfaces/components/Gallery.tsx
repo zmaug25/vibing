@@ -1,15 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Edit2, Sparkles } from 'lucide-react';
 import { interfaceConfigs, InterfaceConfig } from '../data/interfaces';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import AIContextModal from './AIContextModal';
 
 interface GalleryProps {
   onSelectInterface: (config: InterfaceConfig) => void;
 }
 
 export default function Gallery({ onSelectInterface }: GalleryProps) {
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+
   // Group interfaces by category
   const groupedInterfaces = interfaceConfigs.reduce((acc, config) => {
     if (!acc[config.category]) {
@@ -19,6 +22,12 @@ export default function Gallery({ onSelectInterface }: GalleryProps) {
     return acc;
   }, {} as Record<string, InterfaceConfig[]>);
 
+  const handleAICustomization = async (context: string) => {
+    console.log('AI Customization context:', context);
+    // TODO: Implement AI customization logic
+    alert(`AI customization requested with context: "${context}"`);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto">
@@ -27,7 +36,10 @@ export default function Gallery({ onSelectInterface }: GalleryProps) {
             <h1 className="text-4xl font-bold mb-2">UI Interface Library</h1>
             <p className="text-gray-600">Choose an interface template to customize and export</p>
           </div>
-          <Button className="flex items-center gap-2" disabled>
+          <Button 
+            className="flex items-center gap-2" 
+            onClick={() => setIsAIModalOpen(true)}
+          >
             <Sparkles className="w-4 h-4" />
             Customize with AI
           </Button>
@@ -76,13 +88,19 @@ export default function Gallery({ onSelectInterface }: GalleryProps) {
         {interfaceConfigs.length === 0 && (
           <div className="text-center py-12">
             <div className="text-gray-400 mb-4">
-              <Plus className="w-16 h-16 mx-auto mb-4" />
+              <Sparkles className="w-16 h-16 mx-auto mb-4" />
             </div>
             <h3 className="text-xl font-semibold text-gray-600 mb-2">No interfaces available</h3>
             <p className="text-gray-500">Add your first interface template to get started</p>
           </div>
         )}
       </div>
+
+      <AIContextModal
+        isOpen={isAIModalOpen}
+        onClose={() => setIsAIModalOpen(false)}
+        onSubmit={handleAICustomization}
+      />
     </div>
   );
 }
