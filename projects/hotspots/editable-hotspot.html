@@ -1240,6 +1240,78 @@
       return false;
     }
   }
+
+  // IndexedDB fallback for large profile states
+  function getProfilesDb() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open('HotspotDB', 1);
+      request.onupgradeneeded = (e) => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains('profiles')) {
+          db.createObjectStore('profiles', { keyPath: 'id' });
+        }
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async function idbPutProfileState(id, state) {
+    const db = await getProfilesDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('profiles', 'readwrite');
+      const store = tx.objectStore('profiles');
+      store.put({ id, state });
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  async function idbGetProfileState(id) {
+    const db = await getProfilesDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('profiles', 'readonly');
+      const store = tx.objectStore('profiles');
+      const req = store.get(id);
+      req.onsuccess = () => resolve(req.result ? req.result.state : null);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function persistProfiles(profiles) {
+    // First try naive save
+    if (saveProfilesToStorage(profiles)) return true;
+    // Move large states to IndexedDB selectively
+    let changed = false;
+    for (let i = 0; i < profiles.length; i++) {
+      const p = profiles[i];
+      if (p && p.state) {
+        try {
+          const s = JSON.stringify(p.state);
+          if (s.length > 200000) { // ~200KB threshold
+            await idbPutProfileState(p.id, p.state);
+            profiles[i] = { id: p.id, name: p.name, createdAt: p.createdAt, stateInIdb: true };
+            changed = true;
+          }
+        } catch (_) {
+          // If stringify fails, move to IDB
+          await idbPutProfileState(p.id, p.state);
+          profiles[i] = { id: p.id, name: p.name, createdAt: p.createdAt, stateInIdb: true };
+          changed = true;
+        }
+      }
+    }
+    if (changed && saveProfilesToStorage(profiles)) return true;
+    // As last resort, move all states to IDB
+    for (let i = 0; i < profiles.length; i++) {
+      const p = profiles[i];
+      if (p && p.state) {
+        await idbPutProfileState(p.id, p.state);
+        profiles[i] = { id: p.id, name: p.name, createdAt: p.createdAt, stateInIdb: true };
+      }
+    }
+    return saveProfilesToStorage(profiles);
+  }
   
   function generateId() {
     if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
@@ -1270,7 +1342,7 @@
       currentProfileId = id;
       profiles.push({ id, name, createdAt: new Date().toISOString(), state });
     }
-    saveProfilesToStorage(profiles);
+    persistProfiles(profiles);
     renderProfilesList();
   }
 
@@ -1290,7 +1362,7 @@
     btn.disabled = !currentProfileId;
   }
 
-  function saveProfileChanges() {
+  async function saveProfileChanges() {
     if (!currentProfileId) return;
     const profiles = loadProfilesFromStorage();
     const idx = profiles.findIndex(p => p.id === currentProfileId);
@@ -1298,7 +1370,7 @@
     const state = getCurrentState();
     const name = currentProfile.name || (state.profile && state.profile.name) || 'Untitled Profile';
     profiles[idx] = { ...profiles[idx], name, state };
-    const ok = saveProfilesToStorage(profiles);
+    const ok = await persistProfiles(profiles);
     renderProfilesList();
     if (ok) {
       showToast('Saved changes to profile');
@@ -1307,7 +1379,7 @@
     }
   }
 
-  function saveAsNewProfile() {
+  async function saveAsNewProfile() {
     const nameInput = document.getElementById('profilesNameInput');
     const name = (nameInput && nameInput.value.trim()) || `${currentProfile.name} (copy)` || 'New Profile';
     const state = getCurrentState();
@@ -1316,7 +1388,7 @@
     const profiles = loadProfilesFromStorage();
     const id = generateId();
     profiles.push({ id, name, createdAt: new Date().toISOString(), state });
-    const ok = saveProfilesToStorage(profiles);
+    const ok = await persistProfiles(profiles);
     renderProfilesList();
     if (ok) {
       showToast('Saved new profile');
@@ -1379,7 +1451,15 @@
     const profiles = loadProfilesFromStorage();
     const p = profiles.find(x => x.id === id);
     if (!p) return;
-    applyState(p.state);
+    if (p.stateInIdb) {
+      idbGetProfileState(p.id).then((state) => {
+        if (state) applyState(state);
+      }).catch(() => {
+        // fallback: do nothing
+      });
+    } else {
+      applyState(p.state);
+    }
     currentProfile.name = p.name || (p.state && p.state.profile && p.state.profile.name) || 'Untitled Profile';
     currentProfileId = p.id;
     updateProfileBadge();
