@@ -5,10 +5,10 @@ import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Card } from './ui/card';
 import { Download, Edit2, Eye, ArrowLeft } from 'lucide-react';
-import { InterfaceConfig, EditableText } from './interfaces';
-import AICompanion from './AICompanion';
-import MobileAIAssistant from './MobileAIAssistant';
-import CallRouting from './CallRouting';
+import { InterfaceConfig, EditableText } from '../data/interfaces';
+import AICompanion from './interfaces/AICompanion';
+import MobileAIAssistant from './interfaces/MobileAIAssistant';
+import CallRouting from './interfaces/CallRouting';
 
 interface InterfaceEditorProps {
   interfaceConfig: InterfaceConfig;
