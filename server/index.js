@@ -3,6 +3,7 @@ import cors from 'cors';
 import pkg from 'pg';
 import path from 'path';
 import fs from 'fs';
+import { promises as fsp } from 'fs';
 import multer from 'multer';
 import { fileURLToPath } from 'url';
 
@@ -17,9 +18,9 @@ app.use(express.json({ limit: '15mb' }));
 // Limit per-profile state size (bytes) to keep DB small
 const MAX_STATE_BYTES = parseInt(process.env.MAX_STATE_BYTES || '262144', 10); // 256KB default
 
-const useMemoryStore = !process.env.DATABASE_URL;
+const useFileStore = !process.env.DATABASE_URL;
 let pool = null;
-if (!useMemoryStore) {
+if (!useFileStore) {
   pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.DATABASE_URL && process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
@@ -27,7 +28,7 @@ if (!useMemoryStore) {
 }
 
 async function ensureSchema() {
-  if (useMemoryStore) return;
+  if (useFileStore) return;
   await pool.query(`
     create extension if not exists pgcrypto;
     create table if not exists profiles (
@@ -43,8 +44,30 @@ async function ensureSchema() {
   `);
 }
 
-// Memory store fallback
-const mem = { profiles: new Map(), states: new Map() };
+// File store fallback (volume)
+const profilesRoot = process.env.PROFILES_DIR || '/data/profiles';
+try { fs.mkdirSync(profilesRoot, { recursive: true }); } catch {}
+const statesDir = path.join(profilesRoot, 'state');
+try { fs.mkdirSync(statesDir, { recursive: true }); } catch {}
+
+async function loadIndex() {
+  try {
+    const buf = await fsp.readFile(path.join(profilesRoot, 'index.json'), 'utf8');
+    const idx = JSON.parse(buf);
+    return Array.isArray(idx) ? idx : [];
+  } catch {
+    return [];
+  }
+}
+
+async function saveIndex(idx) {
+  const file = path.join(profilesRoot, 'index.json');
+  await fsp.writeFile(file, JSON.stringify(idx, null, 2), 'utf8');
+}
+
+function statePath(id) {
+  return path.join(statesDir, `${id}.json`);
+}
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 
@@ -54,8 +77,9 @@ app.get('/', (req, res) => {
 });
 
 app.get('/api/profiles', async (req, res) => {
-  if (useMemoryStore) {
-    const rows = Array.from(mem.profiles.values()).sort((a,b)=> new Date(b.updated_at)-new Date(a.updated_at));
+  if (useFileStore) {
+    const rows = await loadIndex();
+    rows.sort((a,b)=> new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at));
     return res.json(rows);
   }
   const { rows } = await pool.query('select id, name, created_at, updated_at from profiles order by updated_at desc');
@@ -64,10 +88,16 @@ app.get('/api/profiles', async (req, res) => {
 
 app.get('/api/profiles/:id', async (req, res) => {
   const { id } = req.params;
-  if (useMemoryStore) {
-    const p = mem.profiles.get(id);
-    if (!p) return res.status(404).json({ error: 'not_found' });
-    return res.json({ ...p, state: mem.states.get(id) });
+  if (useFileStore) {
+    const idx = await loadIndex();
+    const row = idx.find(r => r.id === id);
+    if (!row) return res.status(404).json({ error: 'not_found' });
+    let state = null;
+    try {
+      const buf = await fsp.readFile(statePath(id), 'utf8');
+      state = JSON.parse(buf);
+    } catch {}
+    return res.json({ ...row, state });
   }
   const { rows } = await pool.query('select p.id, p.name, p.created_at, p.updated_at, s.state from profiles p left join profile_states s on s.profile_id = p.id where p.id = $1', [id]);
   if (rows.length === 0) return res.status(404).json({ error: 'not_found' });
@@ -85,12 +115,14 @@ app.post('/api/profiles', async (req, res) => {
   } catch (_) {
     return res.status(400).json({ error: 'invalid_state' });
   }
-  if (useMemoryStore) {
+  if (useFileStore) {
     const id = cryptoRandomId();
     const now = new Date().toISOString();
     const row = { id, name, created_at: now, updated_at: now };
-    mem.profiles.set(id, row);
-    mem.states.set(id, state);
+    const idx = await loadIndex();
+    idx.push(row);
+    await fsp.writeFile(statePath(id), JSON.stringify(state), 'utf8');
+    await saveIndex(idx);
     return res.status(201).json({ ...row, state });
   }
   const client = await pool.connect();
@@ -122,13 +154,17 @@ app.put('/api/profiles/:id', async (req, res) => {
       return res.status(400).json({ error: 'invalid_state' });
     }
   }
-  if (useMemoryStore) {
-    const row = mem.profiles.get(id);
-    if (!row) return res.status(404).json({ error: 'not_found' });
-    const updated = { ...row, name: name || row.name, updated_at: new Date().toISOString() };
-    mem.profiles.set(id, updated);
-    if (state) mem.states.set(id, state);
-    return res.json({ ...updated, state: mem.states.get(id) });
+  if (useFileStore) {
+    const idx = await loadIndex();
+    const i = idx.findIndex(r => r.id === id);
+    if (i === -1) return res.status(404).json({ error: 'not_found' });
+    const now = new Date().toISOString();
+    idx[i] = { ...idx[i], name: name || idx[i].name, updated_at: now };
+    if (state) await fsp.writeFile(statePath(id), JSON.stringify(state), 'utf8');
+    await saveIndex(idx);
+    let curState = null;
+    try { curState = JSON.parse(await fsp.readFile(statePath(id), 'utf8')); } catch {}
+    return res.json({ ...idx[i], state: curState });
   }
   const client = await pool.connect();
   try {
@@ -151,9 +187,11 @@ app.put('/api/profiles/:id', async (req, res) => {
 
 app.delete('/api/profiles/:id', async (req, res) => {
   const { id } = req.params;
-  if (useMemoryStore) {
-    mem.profiles.delete(id);
-    mem.states.delete(id);
+  if (useFileStore) {
+    const idx = await loadIndex();
+    const next = idx.filter(r => r.id !== id);
+    await saveIndex(next);
+    try { await fsp.unlink(statePath(id)); } catch {}
     return res.json({ ok: true });
   }
   await pool.query('delete from profiles where id=$1', [id]);
