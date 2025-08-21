@@ -51,7 +51,7 @@ export default function InterfaceEditor({ interfaceConfig, onBack }: InterfaceEd
       // Prefer html-to-image (more reliable for complex styles)
       try {
         const dataUrl = await htmlToImage.toPng(node, {
-          backgroundColor: '#ffffff',
+          backgroundColor: 'transparent',
           width,
           height,
           pixelRatio: Math.max(2, Math.ceil(window.devicePixelRatio || 1)),
@@ -68,7 +68,7 @@ export default function InterfaceEditor({ interfaceConfig, onBack }: InterfaceEd
       } catch (_) {
         // Fallback to html2canvas if html-to-image fails
         const canvas = await html2canvas(node, {
-          backgroundColor: '#ffffff',
+          backgroundColor: null as unknown as string,
           width: width || undefined,
           height: height || undefined,
           scale: Math.max(2, Math.ceil(window.devicePixelRatio || 1)),
@@ -173,8 +173,10 @@ export default function InterfaceEditor({ interfaceConfig, onBack }: InterfaceEd
 
           {/* Preview Panel */}
           <div className={`${isEditing ? '' : 'col-span-2'} flex justify-center`}>
-            <div ref={frameRef} className="bg-white p-8 rounded-lg shadow-lg inline-block">
-              {renderInterface()}
+            <div className="p-8 rounded-lg shadow-lg inline-block bg-transparent">
+              <div ref={frameRef} className="inline-block">
+                {renderInterface()}
+              </div>
             </div>
           </div>
         </div>
