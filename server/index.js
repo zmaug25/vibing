@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import pkg from 'pg';
 import path from 'path';
+import fs from 'fs';
+import multer from 'multer';
 import { fileURLToPath } from 'url';
 
 const { Pool } = pkg;
@@ -161,6 +163,27 @@ function cryptoRandomId() {
 // Serve static files
 const publicDir = path.join(__dirname, '..');
 app.use(express.static(publicDir));
+
+// File uploads (store on Fly volume at /data/uploads)
+const uploadRoot = process.env.UPLOAD_DIR || '/data/uploads';
+try { fs.mkdirSync(uploadRoot, { recursive: true }); } catch {}
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) { cb(null, uploadRoot); },
+  filename: function (req, file, cb) {
+    const ts = Date.now();
+    const safe = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+    cb(null, `${ts}-${safe}`);
+  }
+});
+const upload = multer({ storage, limits: { fileSize: 20 * 1024 * 1024 } }); // 20MB max per file
+
+app.post('/api/upload', upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'no_file' });
+  const rel = path.relative(publicDir, req.file.path);
+  // Expose via a static route
+  app.use('/uploads', express.static(uploadRoot));
+  return res.json({ url: `/uploads/${path.basename(req.file.path)}` });
+});
 
 const port = process.env.PORT || 8080;
 ensureSchema().then(() => {

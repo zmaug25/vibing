@@ -1136,17 +1136,18 @@
       });
     }
     if (bgFileInput) {
-      bgFileInput.addEventListener('change', (e) => {
+      bgFileInput.addEventListener('change', async (e) => {
         const file = e.target.files && e.target.files[0];
         if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const dataUrl = ev.target.result;
-          setBackground(dataUrl, bgNameInput.value || currentBackground.name, true);
+        try {
+          const url = await uploadFileToServer(file);
+          setBackground(url, bgNameInput.value || currentBackground.name, false);
           const hint = document.getElementById('bgShareHint');
-          if (hint) hint.textContent = 'Using local image. Share link will not include this file.';
-        };
-        reader.readAsDataURL(file);
+          if (hint) hint.textContent = 'Background uploaded.';
+        } catch (_) {
+          const hint = document.getElementById('bgShareHint');
+          if (hint) hint.textContent = 'Upload failed. Try a smaller file (<=20MB).';
+        }
       });
     }
     if (profilesNameInput) {
@@ -2197,17 +2198,13 @@
     cancelEdit();
   }
   
-  function handleFileUpload(event) {
+  async function handleFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const mediaUrl = e.target.result;
-      
+    try {
+      const mediaUrl = await uploadFileToServer(file);
       if (selectedHotspot) {
         selectedHotspot.dataset.mediaUrl = mediaUrl;
-        
         // Update popup in real-time
         const popupId = selectedHotspot.id.replace('hotspot', 'popup');
         const popup = document.getElementById(popupId);
@@ -2215,28 +2212,24 @@
           const popupContent = popup.querySelector('.popup-content');
           const title = selectedHotspot.dataset.title;
           const description = selectedHotspot.dataset.description;
-          
           let mediaContent = '';
           if (file.type.startsWith('image/')) {
             mediaContent = `<img src="${mediaUrl}" alt="${title}">`;
           } else if (file.type.startsWith('video/')) {
             mediaContent = `<video controls><source src="${mediaUrl}" type="${file.type}"></video>`;
           }
-          
           popupContent.innerHTML = `
             <h3>${title}</h3>
             <p>${description}</p>
             ${mediaContent}
           `;
         }
-        
         // Update stored data
         const hotspotData = hotspots.find(h => h.id === selectedHotspot.id);
         if (hotspotData) {
           hotspotData.mediaUrl = mediaUrl;
         }
       }
-      
       // Show preview
       const mediaPreview = document.getElementById('mediaPreview');
       if (file.type.startsWith('image/')) {
@@ -2244,9 +2237,19 @@
       } else if (file.type.startsWith('video/')) {
         mediaPreview.innerHTML = `<video controls style="max-width: 100px; max-height: 100px; border-radius: 5px;"><source src="${mediaUrl}" type="${file.type}"></video>`;
       }
-    };
-    
-    reader.readAsDataURL(file);
+      showToast('Media uploaded');
+    } catch (err) {
+      showToast('Upload failed. Try <=20MB.', true);
+    }
+  }
+
+  async function uploadFileToServer(file) {
+    const form = new FormData();
+    form.append('file', file);
+    const resp = await fetch('/api/upload', { method: 'POST', body: form });
+    if (!resp.ok) throw new Error('upload_failed');
+    const data = await resp.json();
+    return data.url;
   }
   
   function addNewHotspot() {
