@@ -666,7 +666,7 @@
 </div>
 
 <!-- Background badge -->
-<div class="bg-badge" id="bgBadge" style="display: none;">Background: Default</div>
+<div class="bg-badge" id="bgBadge" style="display: none; visibility: hidden;">Background: Default</div>
 
 <!-- Profile badge -->
 <div class="profile-badge" id="profileBadge" style="display: none; visibility: hidden;">Profile: Untitled Profile</div>
@@ -1374,7 +1374,9 @@
   function updateBackgroundBadge() {
     const badge = document.getElementById('bgBadge');
     if (!badge) return;
-    badge.style.display = currentBackground && currentBackground.name ? 'block' : 'none';
+    // keep hidden to reduce UI noise
+    badge.style.display = 'block';
+    badge.style.visibility = 'hidden';
     badge.textContent = 'Background: ' + (currentBackground.name || 'Untitled');
   }
   
