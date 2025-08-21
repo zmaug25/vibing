@@ -1066,6 +1066,7 @@
   document.addEventListener('DOMContentLoaded', function() {
     initializeBackgroundFromQuery();
     initializeSnapshotFromQuery();
+    seedProfilesIfEmpty();
     initializeHotspots();
     setupEventListeners();
     updateProfileBadge();
@@ -1307,6 +1308,45 @@
       .replace(/>/g, '&gt;')
       .replace(/\"/g, '&quot;')
       .replace(/'/g, '&#039;');
+  }
+
+  // Seed a couple of demo profiles if none exist yet
+  function seedProfilesIfEmpty() {
+    const existing = loadProfilesFromStorage();
+    if (existing.length > 0) return;
+    const demo1 = {
+      id: generateId(),
+      name: 'Healthcare: OR Demo',
+      createdAt: new Date().toISOString(),
+      state: {
+        profile: { name: 'Healthcare: OR Demo' },
+        bg: {
+          url: 'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=1600&h=900&fit=crop',
+          name: 'Operating Room'
+        },
+        hotspots: [
+          { x: 22, y: 35, color: '#ff3b30', title: 'Vitals Monitor', description: 'Patient vitals and telemetry.', mediaUrl: '', icon: 'info' },
+          { x: 58, y: 62, color: '#34c759', title: 'Infusion Pump', description: 'Medication delivery system.', mediaUrl: '', icon: 'plus' }
+        ]
+      }
+    };
+    const demo2 = {
+      id: generateId(),
+      name: 'Healthcare: ICU Demo',
+      createdAt: new Date().toISOString(),
+      state: {
+        profile: { name: 'Healthcare: ICU Demo' },
+        bg: {
+          url: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1600&h=900&fit=crop',
+          name: 'ICU Room'
+        },
+        hotspots: [
+          { x: 30, y: 28, color: '#0064ff', title: 'Ventilator', description: 'Respiratory support equipment.', mediaUrl: '', icon: 'info' },
+          { x: 72, y: 70, color: '#ffcc00', title: 'Nurse Station', description: 'Observation and notes.', mediaUrl: '', icon: 'star' }
+        ]
+      }
+    };
+    saveProfilesToStorage([demo1, demo2]);
   }
 
   // ===================== Background Settings =====================
