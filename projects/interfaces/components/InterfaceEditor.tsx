@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import html2canvas from 'html2canvas';
+import * as htmlToImage from 'html-to-image';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
@@ -45,43 +46,44 @@ export default function InterfaceEditor({ interfaceConfig, onBack }: InterfaceEd
       const width = Math.max(node.scrollWidth, Math.ceil(rect.width));
       const height = Math.max(node.scrollHeight, Math.ceil(rect.height));
 
-      const canvas = await html2canvas(node, {
-        backgroundColor: '#ffffff',
-        width: width || undefined,
-        height: height || undefined,
-        scale: Math.max(2, Math.ceil(window.devicePixelRatio || 1)),
-        useCORS: true,
-        allowTaint: false,
-        logging: false,
-        foreignObjectRendering: true,
-      });
-
       const fileName = `${interfaceConfig.id}-interface.png`;
 
-      const triggerDownload = (href: string) => {
+      // Prefer html-to-image (more reliable for complex styles)
+      try {
+        const dataUrl = await htmlToImage.toPng(node, {
+          backgroundColor: '#ffffff',
+          width,
+          height,
+          pixelRatio: Math.max(2, Math.ceil(window.devicePixelRatio || 1)),
+          cacheBust: true,
+          style: { margin: '0', padding: '0' },
+        });
         const a = document.createElement('a');
-        a.href = href;
+        a.href = dataUrl;
         a.download = fileName;
         document.body.appendChild(a);
         a.click();
         a.remove();
-      };
-
-      if (canvas.toBlob) {
-        canvas.toBlob((blob) => {
-          if (!blob) {
-            // Fallback to data URL if blob failed
-            const dataUrl = canvas.toDataURL('image/png');
-            triggerDownload(dataUrl);
-            return;
-          }
-          const url = URL.createObjectURL(blob);
-          triggerDownload(url);
-          URL.revokeObjectURL(url);
-        }, 'image/png');
-      } else {
+        return;
+      } catch (_) {
+        // Fallback to html2canvas if html-to-image fails
+        const canvas = await html2canvas(node, {
+          backgroundColor: '#ffffff',
+          width: width || undefined,
+          height: height || undefined,
+          scale: Math.max(2, Math.ceil(window.devicePixelRatio || 1)),
+          useCORS: true,
+          allowTaint: false,
+          logging: false,
+          foreignObjectRendering: true,
+        });
         const dataUrl = canvas.toDataURL('image/png');
-        triggerDownload(dataUrl);
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
       }
     } catch (error) {
       console.error('Error generating PNG:', error);
