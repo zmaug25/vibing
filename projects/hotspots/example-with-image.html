@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Hotspot Tool Example with Image</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+      background-color: #111;
+      color: #fff;
+      overflow: hidden;
+    }
+    
+    #background-container {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    #background-container img, 
+    #background-container video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .hotspot {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background-color: rgba(255, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 3px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    }
+    
+    .hotspot:hover {
+      transform: scale(1.3);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.6);
+    }
+    
+    .hotspot svg {
+      width: 25px;
+      height: 25px;
+      fill: white;
+    }
+    
+    .hotspot::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.4);
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(2.5);
+        opacity: 0;
+      }
+    }
+    
+    /* Popup */
+    .popup {
+      position: absolute;
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(255, 0, 0, 0.95), rgba(200, 0, 0, 0.95));
+      border-radius: 10px;
+      display: none;
+      z-index: 100;
+      min-width: 250px;
+      max-width: 400px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .popup-content {
+      color: white;
+    }
+    
+    .popup-content h3 {
+      margin: 0 0 10px 0;
+      font-size: 1.3em;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+    }
+    
+    .popup-content p {
+      margin: 0 0 10px 0;
+      line-height: 1.5;
+      font-size: 0.9em;
+    }
+    
+    .popup-content img, 
+    .popup-content video {
+      max-width: 100%;
+      max-height: 200px;
+      display: block;
+      border-radius: 6px;
+      margin: 8px 0;
+    }
+    
+    .close-btn {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      font-size: 20px;
+      color: white;
+      cursor: pointer;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 50%;
+      width: 25px;
+      height: 25px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s ease;
+    }
+    
+    .close-btn:hover {
+      background: rgba(0, 0, 0, 0.7);
+    }
+    
+    /* Instructions */
+    .instructions {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 0.9em;
+      max-width: 300px;
+    }
+    
+    /* Hotspot colors */
+    .hotspot[data-color="red"] { background-color: rgba(255, 0, 0, 0.8); }
+    .hotspot[data-color="blue"] { background-color: rgba(0, 100, 255, 0.8); }
+    .hotspot[data-color="green"] { background-color: rgba(0, 255, 0, 0.8); }
+    .hotspot[data-color="yellow"] { background-color: rgba(255, 255, 0, 0.8); }
+    .hotspot[data-color="purple"] { background-color: rgba(128, 0, 128, 0.8); }
+  </style>
+</head>
+<body>
+
+<div id="background-container">
+  <!-- Example: Replace this with your actual image -->
+  <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop" alt="Mountain Landscape">
+  
+  <!-- Hotspot 1 - Mountain Peak -->
+  <div class="hotspot" style="top: 20%; left: 45%;" data-color="red" data-popup="popup1">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+    </svg>
+  </div>
+
+  <!-- Hotspot 2 - Forest Area -->
+  <div class="hotspot" style="top: 65%; left: 25%;" data-color="green" data-popup="popup2">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+    </svg>
+  </div>
+
+  <!-- Hotspot 3 - Lake/Water -->
+  <div class="hotspot" style="top: 75%; left: 70%;" data-color="blue" data-popup="popup3">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+    </svg>
+  </div>
+
+  <!-- Popup 1 - Mountain Peak -->
+  <div class="popup" id="popup1">
+    <span class="close-btn">&times;</span>
+    <div class="popup-content">
+      <h3>Mountain Peak</h3>
+      <p>This majestic peak stands at over 14,000 feet above sea level. The snow-capped summit offers breathtaking views of the surrounding landscape.</p>
+      <p><strong>Elevation:</strong> 14,259 ft<br>
+      <strong>Difficulty:</strong> Advanced</p>
+    </div>
+  </div>
+
+  <!-- Popup 2 - Forest Area -->
+  <div class="popup" id="popup2">
+    <span class="close-btn">&times;</span>
+    <div class="popup-content">
+      <h3>Alpine Forest</h3>
+      <p>This dense forest is home to various wildlife including elk, deer, and numerous bird species. The hiking trails here are perfect for nature enthusiasts.</p>
+      <p><strong>Trail Length:</strong> 3.2 miles<br>
+      <strong>Difficulty:</strong> Moderate</p>
+    </div>
+  </div>
+
+  <!-- Popup 3 - Lake/Water -->
+  <div class="popup" id="popup3">
+    <span class="close-btn">&times;</span>
+    <div class="popup-content">
+      <h3>Alpine Lake</h3>
+      <p>This crystal-clear lake is fed by mountain snowmelt and offers excellent fishing opportunities. The water temperature rarely exceeds 60°F even in summer.</p>
+      <p><strong>Depth:</strong> 45 feet<br>
+      <strong>Fish Species:</strong> Trout, Bass</p>
+    </div>
+  </div>
+</div>
+
+<!-- Instructions -->
+<div class="instructions">
+  <strong>Interactive Hotspot Demo</strong><br>
+  Click on the colored circles to explore different areas of this landscape. Each hotspot reveals information about specific features.
+</div>
+
+<script>
+  // Initialize hotspots
+  const hotspots = document.querySelectorAll('.hotspot');
+  const popups = document.querySelectorAll('.popup');
+
+  // Add click event listeners to all hotspots
+  hotspots.forEach(hotspot => {
+    hotspot.addEventListener('click', (e) => {
+      const popupId = hotspot.dataset.popup;
+      const popup = document.getElementById(popupId);
+      
+      if (popup) {
+        // Position popup relative to hotspot
+        const rect = hotspot.getBoundingClientRect();
+        popup.style.top = `${rect.bottom + 10}px`;
+        popup.style.left = `${rect.left}px`;
+        
+        // Set popup background color based on hotspot color
+        const color = hotspot.dataset.color;
+        popup.style.background = `linear-gradient(135deg, ${getColorRgba(color, 0.95)}, ${getColorRgba(color, 0.85)})`;
+        
+        popup.style.display = 'block';
+      }
+    });
+  });
+
+  // Add close event listeners to all popups
+  popups.forEach(popup => {
+    const closeBtn = popup.querySelector('.close-btn');
+    closeBtn.addEventListener('click', () => {
+      popup.style.display = 'none';
+    });
+  });
+
+  // Close popup when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.hotspot') && !e.target.closest('.popup')) {
+      popups.forEach(popup => {
+        popup.style.display = 'none';
+      });
+    }
+  });
+
+  // Helper function to get color RGBA
+  function getColorRgba(color, alpha) {
+    const colors = {
+      'red': '255, 0, 0',
+      'blue': '0, 100, 255',
+      'green': '0, 255, 0',
+      'yellow': '255, 255, 0',
+      'purple': '128, 0, 128'
+    };
+    return `rgba(${colors[color] || '255, 0, 0'}, ${alpha})`;
+  }
+</script>
+
+</body>
+</html> 

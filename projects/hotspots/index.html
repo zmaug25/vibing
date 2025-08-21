@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Interactive Hotspot Tool</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background-color: #111;
+      color: #fff;
+    }
+    #background-container {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #background-container img, 
+    #background-container video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .hotspot {
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background-color: rgba(255, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    .hotspot:hover {
+      transform: scale(1.05);
+    }
+    .hotspot svg {
+      width: 50px;
+      height: 50px;
+      fill: white;
+    }
+    /* Popup */
+    .popup {
+      position: absolute;
+      padding: 20px;
+      background-color: rgba(255, 0, 0, 0.5);
+      border-radius: 8px;
+      display: none;
+      z-index: 100;
+    }
+    .popup-content img, 
+    .popup-content video {
+      max-width: calc(100% - 40px);
+      max-height: calc(100% - 40px);
+      display: block;
+    }
+    .close-btn {
+      position: absolute;
+      top: 5px;
+      right: 8px;
+      font-size: 20px;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div id="background-container">
+  <img id="bg" src="your-background.jpg" alt="Background">
+  
+  <div class="hotspot" style="top: 30%; left: 40%;" data-color="rgba(255,0,0,0.5)">
+    <!-- Example SVG icon -->
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"/>
+    </svg>
+  </div>
+
+  <div class="popup" id="popup1">
+    <span class="close-btn">&times;</span>
+    <div class="popup-content">
+      <img src="example.jpg" alt="Popup Content">
+    </div>
+  </div>
+</div>
+
+<script>
+  const hotspot = document.querySelector('.hotspot');
+  const popup = document.getElementById('popup1');
+  const closeBtn = popup.querySelector('.close-btn');
+
+  hotspot.addEventListener('click', (e) => {
+    popup.style.top = `${hotspot.offsetTop + hotspot.offsetHeight + 10}px`;
+    popup.style.left = `${hotspot.offsetLeft}px`;
+    popup.style.backgroundColor = hotspot.dataset.color;
+    popup.style.display = 'block';
+  });
+
+  closeBtn.addEventListener('click', () => {
+    popup.style.display = 'none';
+  });
+</script>
+
+</body>
+</html> 
