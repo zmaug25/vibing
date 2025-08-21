@@ -175,6 +175,8 @@
       border: 2px solid rgba(255, 255, 255, 0.2);
       min-width: 300px;
       z-index: 1000;
+      max-height: calc(100vh - 40px);
+      overflow: auto;
     }
     
     .editor-panel h3 {
@@ -414,6 +416,9 @@
       max-width: calc(100% - 40px);
       color: #fff;
       box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
     }
     
     .modal-header {
@@ -428,7 +433,7 @@
     .modal-close { cursor: pointer; color: #aaa; font-size: 20px; }
     .modal-close:hover { color: #fff; }
     
-    .modal-body { padding: 16px; }
+    .modal-body { padding: 16px; overflow: auto; }
     .modal-footer { padding: 12px 16px; border-top: 1px solid #222; display: flex; gap: 10px; justify-content: space-between; align-items: center; }
     
     .bg-form-group { margin-bottom: 12px; }
@@ -1702,7 +1707,7 @@
     }
   }
   
-  function updateHotspotInRealTime() {
+  function updateHotspotInRealTime(e) {
     if (!selectedHotspot) return;
     
     const x = parseFloat(document.getElementById('posX').value) || 0;
@@ -1713,12 +1718,22 @@
     const title = document.getElementById('hotspotTitle').value;
     const description = document.getElementById('hotspotDescription').value;
     
-    // Get color value (prioritize hex input, fallback to color picker)
-    let color = colorHex.value;
-    if (!color || !isValidHexColor(color)) {
+    // Determine color source: if event came from color input or hex field, prioritize that
+    let color = colorPicker.value;
+    if (e && e.target && e.target.id === 'hotspotColorHex') {
+      const hex = colorHex.value.trim();
+      if (isValidHexColor(hex)) {
+        color = hex;
+        colorPicker.value = hex;
+      }
+    } else if (e && e.target && e.target.id === 'hotspotColor') {
+      colorHex.value = colorPicker.value;
       color = colorPicker.value;
-      colorHex.value = color;
     } else {
+      // No specific source: prefer valid hex, else picker
+      const hex = colorHex.value.trim();
+      color = isValidHexColor(hex) ? hex : colorPicker.value;
+      colorHex.value = color;
       colorPicker.value = color;
     }
     
