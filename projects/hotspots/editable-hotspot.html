@@ -385,6 +385,85 @@
       border-color: rgba(255, 255, 0, 0.6);
       box-shadow: 0 0 10px rgba(255, 255, 0, 0.3);
     }
+    
+    /* Background settings modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+    
+    .modal {
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 10px;
+      width: 520px;
+      max-width: calc(100% - 40px);
+      color: #fff;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+    }
+    
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid #222;
+    }
+    
+    .modal-title { font-size: 1.1em; margin: 0; }
+    .modal-close { cursor: pointer; color: #aaa; font-size: 20px; }
+    .modal-close:hover { color: #fff; }
+    
+    .modal-body { padding: 16px; }
+    .modal-footer { padding: 12px 16px; border-top: 1px solid #222; display: flex; gap: 10px; justify-content: space-between; align-items: center; }
+    
+    .bg-form-group { margin-bottom: 12px; }
+    .bg-form-group label { display: block; margin-bottom: 6px; color: #ccc; font-size: 0.9em; }
+    .bg-form-group input[type="text"] { width: 100%; padding: 8px; border: 1px solid #444; border-radius: 6px; background: #1a1a1a; color: #fff; }
+    .bg-form-hint { font-size: 0.8em; color: #999; margin-top: 6px; }
+    
+    .bg-preview {
+      border: 1px solid #333;
+      border-radius: 8px;
+      background: #0d0d0d;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 180px;
+      margin-top: 10px;
+    }
+    .bg-preview img { max-width: 100%; max-height: 100%; display: block; }
+    
+    .btn { padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em; }
+    .btn-ghost { background: rgba(100, 100, 100, 0.7); color: #fff; }
+    .btn-ghost:hover { background: rgba(100, 100, 100, 0.9); }
+    .btn-accent { background: rgba(0, 140, 255, 0.8); color: #fff; }
+    .btn-accent:hover { background: rgba(0, 140, 255, 1); }
+    
+    /* Background badge */
+    .bg-badge {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 0.9em;
+      z-index: 1000;
+      max-width: 60vw;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   </style>
 </head>
 <body>
@@ -401,6 +480,7 @@
   <button class="mode-btn active" onclick="setMode('view')">View Mode</button>
   <button class="mode-btn" onclick="setMode('edit')">Edit Mode</button>
   <button class="mode-btn" onclick="addNewHotspot()" style="background: rgba(0, 255, 0, 0.7);">+ New Hotspot</button>
+  <button class="mode-btn" onclick="openBackgroundModal()" style="background: rgba(0, 140, 255, 0.7);">Background</button>
 </div>
 
 <!-- Editor Panel -->
@@ -545,6 +625,380 @@
   <p>Click on the colored circles to explore different areas of this landscape. Each hotspot reveals information about specific features.</p>
 </div>
 
+<!-- Background badge -->
+<div class="bg-badge" id="bgBadge" style="display: none;">Background: Default</div>
+
+<!-- Background Settings Modal -->
+<div class="modal-overlay" id="bgModal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="bgModalTitle">
+    <div class="modal-header">
+      <h4 class="modal-title" id="bgModalTitle">Background Settings</h4>
+      <span class="modal-close" onclick="closeBackgroundModal()">×</span>
+    </div>
+    <div class="modal-body">
+      <div class="bg-form-group">
+        <label for="bgNameInput">Background name</label>
+        <input type="text" id="bgNameInput" placeholder="e.g., Mountain Landscape" />
+      </div>
+      <div class="bg-form-group">
+        <label for="bgUrlInput">Image URL</label>
+        <input type="text" id="bgUrlInput" placeholder="https://example.com/image.jpg" />
+        <div class="bg-form-hint">Use a publicly accessible URL for shareable links.</div>
+      </div>
+      <div class="bg-form-group">
+        <label for="bgFileInput">Or upload an image</label>
+        <input type="file" id="bgFileInput" accept="image/*" />
+        <div class="bg-form-hint">Local uploads preview instantly but are not included in share links.</div>
+      </div>
+      <div class="bg-form-group">
+        <label>Preview</label>
+        <div class="bg-preview">
+          <img id="bgPreview" alt="Background preview" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeBackgroundModal()">Close</button>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <span id="bgShareHint" class="bg-form-hint">Changes apply in real-time.</span>
+        <button class="btn btn-accent" onclick="copyShareLink()">Copy share link</button>
+        <button class="btn btn-accent" onclick="copySnapshotLink()" title="Copy link with background + hotspots">Copy snapshot link</button>
+      </div>
+    </div>
+  </div>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+</div>
+
 <script>
   let currentMode = 'view';
   let selectedHotspot = null;
@@ -555,14 +1009,19 @@
   let isAddingNewHotspot = false;
   let isEditingInstructions = false;
   let isDraggingInstructions = false;
+  let currentBackground = { url: null, name: 'Default', isDataUrl: false };
   
   // Initialize the tool
   document.addEventListener('DOMContentLoaded', function() {
+    initializeBackgroundFromQuery();
+    initializeSnapshotFromQuery();
     initializeHotspots();
     setupEventListeners();
   });
   
   function initializeHotspots() {
+    // If hotspots were loaded from a snapshot, don't add samples
+    if (hotspots && hotspots.length > 0) return;
     // Add some sample hotspots with hex colors and different icons
     addHotspot(25, 30, '#ff0000', 'Mountain Peak', 'This majestic peak stands at over 14,000 feet above sea level.', null, 'star');
     addHotspot(65, 25, '#00ff00', 'Alpine Forest', 'This dense forest is home to various wildlife including elk and deer.', null, 'info');
@@ -587,6 +1046,41 @@
     
     // Background click for adding new hotspots
     container.addEventListener('click', handleBackgroundClick);
+    
+    // Background settings listeners
+    const bgNameInput = document.getElementById('bgNameInput');
+    const bgUrlInput = document.getElementById('bgUrlInput');
+    const bgFileInput = document.getElementById('bgFileInput');
+    
+    if (bgNameInput) {
+      bgNameInput.addEventListener('input', () => {
+        currentBackground.name = bgNameInput.value || 'Untitled';
+        updateBackgroundBadge();
+        updateShareUrl();
+      });
+    }
+    if (bgUrlInput) {
+      bgUrlInput.addEventListener('input', () => {
+        const url = bgUrlInput.value.trim();
+        if (url.length === 0) return;
+        setBackground(url, bgNameInput.value || currentBackground.name, false);
+        updateShareUrl();
+      });
+    }
+    if (bgFileInput) {
+      bgFileInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const dataUrl = ev.target.result;
+          setBackground(dataUrl, bgNameInput.value || currentBackground.name, true);
+          const hint = document.getElementById('bgShareHint');
+          if (hint) hint.textContent = 'Using local image. Share link will not include this file.';
+        };
+        reader.readAsDataURL(file);
+      });
+    }
     
     // Real-time editor updates
     document.getElementById('posX').addEventListener('input', updateHotspotInRealTime);
@@ -618,6 +1112,186 @@
     document.getElementById('instructionFontSize').addEventListener('input', updateInstructionsInRealTime);
     document.getElementById('popupFontFamily').addEventListener('change', updatePopupFonts);
     document.getElementById('popupFontSize').addEventListener('input', updatePopupFonts);
+  }
+
+  // ===================== Background Settings =====================
+  function openBackgroundModal() {
+    const modal = document.getElementById('bgModal');
+    if (!modal) return;
+    const nameInput = document.getElementById('bgNameInput');
+    const urlInput = document.getElementById('bgUrlInput');
+    const preview = document.getElementById('bgPreview');
+    const hint = document.getElementById('bgShareHint');
+    if (nameInput) nameInput.value = currentBackground.name || '';
+    if (urlInput) urlInput.value = currentBackground.isDataUrl ? '' : (currentBackground.url || '');
+    if (preview) preview.src = currentBackground.url || '';
+    if (hint) hint.textContent = currentBackground.isDataUrl ? 'Using local image. Share link will not include this file.' : 'Changes apply in real-time.';
+    modal.style.display = 'flex';
+  }
+  
+  function closeBackgroundModal() {
+    const modal = document.getElementById('bgModal');
+    if (modal) modal.style.display = 'none';
+  }
+  
+  function initializeBackgroundFromQuery() {
+    const params = new URLSearchParams(window.location.search);
+    const bgUrl = params.get('bgUrl');
+    const bgName = params.get('bgName');
+    if (bgUrl) {
+      setBackground(bgUrl, bgName || 'Shared Background', false);
+    } else {
+      // Initialize currentBackground from existing img element
+      const img = document.querySelector('#background-container img');
+      if (img && img.src) {
+        currentBackground.url = img.src;
+        currentBackground.name = 'Default';
+        currentBackground.isDataUrl = img.src.startsWith('data:');
+        updateBackgroundBadge();
+      }
+    }
+  }
+  
+  function setBackground(url, name, isDataUrl) {
+    const img = document.querySelector('#background-container img');
+    if (img) {
+      img.src = url;
+      img.alt = name || 'Background';
+    }
+    const preview = document.getElementById('bgPreview');
+    if (preview) preview.src = url;
+    currentBackground = { url, name: name || 'Untitled', isDataUrl: !!isDataUrl };
+    updateBackgroundBadge();
+  }
+  
+  function updateBackgroundBadge() {
+    const badge = document.getElementById('bgBadge');
+    if (!badge) return;
+    badge.style.display = currentBackground && currentBackground.name ? 'block' : 'none';
+    badge.textContent = 'Background: ' + (currentBackground.name || 'Untitled');
+  }
+  
+  function updateShareUrl() {
+    // Only include bgUrl if not a data URL
+    if (!currentBackground || !currentBackground.url || currentBackground.isDataUrl) return;
+    const params = new URLSearchParams(window.location.search);
+    params.set('bgUrl', currentBackground.url);
+    if (currentBackground.name) params.set('bgName', currentBackground.name);
+    const newUrl = window.location.pathname + '?' + params.toString();
+    window.history.replaceState({}, '', newUrl);
+  }
+  
+  async function copyShareLink() {
+    const hint = document.getElementById('bgShareHint');
+    if (!currentBackground || !currentBackground.url) return;
+    if (currentBackground.isDataUrl && hint) {
+      hint.textContent = 'Local image cannot be shared via link. Use Image URL.';
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      if (hint) hint.textContent = 'Link copied! Share to let others see this background.';
+      setTimeout(() => { if (hint) hint.textContent = 'Changes apply in real-time.'; }, 2000);
+    } catch (_) {
+      if (hint) hint.textContent = 'Unable to copy. Manually copy the address bar.';
+    }
+  }
+
+  // ===================== Snapshot Sharing =====================
+  function encodeState(stateObj) {
+    try {
+      const json = JSON.stringify(stateObj);
+      const bytes = new TextEncoder().encode(json);
+      let binary = '';
+      bytes.forEach(b => binary += String.fromCharCode(b));
+      const base64 = btoa(binary)
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+      return base64;
+    } catch (e) {
+      return '';
+    }
+  }
+  
+  function decodeState(str) {
+    try {
+      const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+      const pad = base64.length % 4 === 0 ? '' : '='.repeat(4 - (base64.length % 4));
+      const binary = atob(base64 + pad);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const json = new TextDecoder().decode(bytes);
+      return JSON.parse(json);
+    } catch (e) {
+      return null;
+    }
+  }
+  
+  function getCurrentState() {
+    const state = {
+      bg: { url: currentBackground.url, name: currentBackground.name },
+      hotspots: hotspots.map(h => ({
+        x: h.x,
+        y: h.y,
+        color: h.color,
+        title: h.title,
+        description: h.description,
+        mediaUrl: h.mediaUrl || '',
+        icon: h.icon || 'plus'
+      }))
+    };
+    return state;
+  }
+  
+  function applyState(state) {
+    if (!state) return;
+    // Background
+    if (state.bg && state.bg.url) {
+      setBackground(state.bg.url, state.bg.name || 'Shared Background', false);
+    }
+    // Clear existing hotspots
+    document.querySelectorAll('.hotspot').forEach(el => el.remove());
+    document.querySelectorAll('.popup').forEach(el => el.remove());
+    hotspots = [];
+    hotspotCounter = 1;
+    // Add hotspots
+    if (Array.isArray(state.hotspots)) {
+      state.hotspots.forEach(h => {
+        addHotspot(Number(h.x) || 0, Number(h.y) || 0, h.color || '#0064ff', h.title || '', h.description || '', h.mediaUrl || '', h.icon || 'plus');
+      });
+    }
+  }
+  
+  function initializeSnapshotFromQuery() {
+    const params = new URLSearchParams(window.location.search);
+    const stateParam = params.get('state');
+    if (!stateParam) return;
+    const state = decodeState(stateParam);
+    if (state) {
+      applyState(state);
+    }
+  }
+  
+  async function copySnapshotLink() {
+    const hint = document.getElementById('bgShareHint');
+    const state = getCurrentState();
+    const encoded = encodeState(state);
+    if (!encoded) {
+      if (hint) hint.textContent = 'Could not encode snapshot.';
+      return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    params.set('state', encoded);
+    // Optionally remove bgUrl/bgName when snapshot is present to shorten
+    params.delete('bgUrl');
+    params.delete('bgName');
+    const url = window.location.pathname + '?' + params.toString();
+    try {
+      await navigator.clipboard.writeText(url);
+      if (hint) hint.textContent = 'Snapshot link copied!';
+      setTimeout(() => { if (hint) hint.textContent = currentBackground.isDataUrl ? 'Using local image. Share link will not include this file.' : 'Changes apply in real-time.'; }, 2000);
+    } catch (_) {
+      if (hint) hint.textContent = 'Unable to copy. Manually copy from address bar.';
+    }
   }
   
   function setMode(mode) {
