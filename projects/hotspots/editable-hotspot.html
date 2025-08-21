@@ -1235,8 +1235,9 @@
   function saveProfilesToStorage(profiles) {
     try {
       localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
-    } catch (_) {
-      // ignore
+      return true;
+    } catch (err) {
+      return false;
     }
   }
   
@@ -1297,8 +1298,13 @@
     const state = getCurrentState();
     const name = currentProfile.name || (state.profile && state.profile.name) || 'Untitled Profile';
     profiles[idx] = { ...profiles[idx], name, state };
-    saveProfilesToStorage(profiles);
+    const ok = saveProfilesToStorage(profiles);
     renderProfilesList();
+    if (ok) {
+      showToast('Saved changes to profile');
+    } else {
+      showToast('Save failed. Data may be too large.', true);
+    }
   }
 
   function saveAsNewProfile() {
@@ -1310,8 +1316,26 @@
     const profiles = loadProfilesFromStorage();
     const id = generateId();
     profiles.push({ id, name, createdAt: new Date().toISOString(), state });
-    saveProfilesToStorage(profiles);
+    const ok = saveProfilesToStorage(profiles);
     renderProfilesList();
+    if (ok) {
+      showToast('Saved new profile');
+    } else {
+      showToast('Save failed. Data may be too large.', true);
+    }
+  }
+
+  function showToast(message, isError = false) {
+    const indicator = document.getElementById('realTimeIndicator');
+    if (!indicator) return;
+    indicator.textContent = message;
+    indicator.style.background = isError ? 'rgba(255, 0, 0, 0.85)' : 'rgba(0, 180, 0, 0.85)';
+    indicator.classList.add('show');
+    setTimeout(() => {
+      indicator.classList.remove('show');
+      indicator.textContent = '✓ Changes applied in real-time';
+      indicator.style.background = 'rgba(0, 255, 0, 0.8)';
+    }, 1200);
   }
   
   function renderProfilesList() {
@@ -1467,6 +1491,8 @@
     if (preview) preview.src = url;
     currentBackground = { url, name: name || 'Untitled', isDataUrl: !!isDataUrl };
     updateBackgroundBadge();
+    // Mark as dirty for current profile: enable Save changes button if a profile is loaded
+    updateSaveChangesButton();
   }
   
   function updateBackgroundBadge() {
@@ -1852,6 +1878,7 @@
     
     // Show real-time update indicator
     showRealTimeIndicator();
+    updateSaveChangesButton();
   }
   
   function showRealTimeIndicator() {
