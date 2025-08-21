@@ -1073,7 +1073,6 @@
   document.addEventListener('DOMContentLoaded', function() {
     initializeBackgroundFromQuery();
     initializeSnapshotFromQuery();
-    seedProfilesIfEmpty();
     initializeHotspots();
     setupEventListeners();
     updateProfileBadge();
@@ -1201,7 +1200,7 @@
   }
 
   // ===================== Profiles Manager =====================
-  function openProfilesModal() {
+  async function openProfilesModal() {
     const modal = document.getElementById('profilesModal');
     if (!modal) return;
     // Ensure the profiles modal is not inside a hidden parent (e.g., bgModal overlay)
@@ -1213,7 +1212,7 @@
     updateSaveChangesButton();
     const nameInput = document.getElementById('profilesNameInput');
     if (nameInput) nameInput.value = currentProfile.name || '';
-    renderProfilesList();
+    await renderProfilesList();
     modal.style.display = 'flex';
   }
   
@@ -1365,18 +1364,14 @@
 
   async function saveProfileChanges() {
     if (!currentProfileId) return;
-    const profiles = loadProfilesFromStorage();
-    const idx = profiles.findIndex(p => p.id === currentProfileId);
-    if (idx === -1) return;
     const state = getCurrentState();
     const name = currentProfile.name || (state.profile && state.profile.name) || 'Untitled Profile';
-    profiles[idx] = { ...profiles[idx], name, state };
-    const ok = await persistProfiles(profiles);
-    renderProfilesList();
-    if (ok) {
+    try {
+      await apiUpdateProfile(currentProfileId, name, state);
+      await renderProfilesList();
       showToast('Saved changes to profile');
-    } else {
-      showToast('Save failed. Data may be too large.', true);
+    } catch (e) {
+      showToast('Save failed. Too large or network error.', true);
     }
   }
 
@@ -1411,11 +1406,11 @@
     }, 1200);
   }
   
-  function renderProfilesList() {
+  async function renderProfilesList() {
     const container = document.getElementById('profilesList');
     if (!container) return;
-    const profiles = loadProfilesFromStorage();
-    if (profiles.length === 0) {
+    const profiles = await apiListProfiles();
+    if (!profiles || profiles.length === 0) {
       container.innerHTML = '<div style="color:#aaa; padding:8px;">No profiles saved yet.</div>';
       return;
     }
@@ -1428,7 +1423,7 @@
       row.style.padding = '6px 8px';
       row.style.borderBottom = '1px solid #1f1f1f';
       const left = document.createElement('div');
-      left.innerHTML = `<div style="font-weight:600;">${escapeHtml(p.name)}</div><div style=\"font-size:12px; color:#888;\">${new Date(p.createdAt).toLocaleString()}</div>`;
+      left.innerHTML = `<div style=\"font-weight:600;\">${escapeHtml(p.name)}</div><div style=\"font-size:12px; color:#888;\">${new Date(p.updated_at || p.created_at || Date.now()).toLocaleString()}</div>`;
       const right = document.createElement('div');
       right.style.display = 'flex';
       right.style.gap = '8px';
@@ -1448,30 +1443,23 @@
     });
   }
   
-  function loadProfile(id) {
-    const profiles = loadProfilesFromStorage();
-    const p = profiles.find(x => x.id === id);
+  async function loadProfile(id) {
+    const p = await apiGetProfile(id);
     if (!p) return;
-    if (p.stateInIdb) {
-      idbGetProfileState(p.id).then((state) => {
-        if (state) applyState(state);
-      }).catch(() => {
-        // fallback: do nothing
-      });
-    } else {
-      applyState(p.state);
-    }
+    if (p.state) applyState(p.state);
     currentProfile.name = p.name || (p.state && p.state.profile && p.state.profile.name) || 'Untitled Profile';
     currentProfileId = p.id;
     updateProfileBadge();
     closeProfilesModal();
   }
   
-  function deleteProfile(id) {
-    const profiles = loadProfilesFromStorage();
-    const next = profiles.filter(x => x.id !== id);
-    saveProfilesToStorage(next);
-    renderProfilesList();
+  async function deleteProfile(id) {
+    try {
+      await apiDeleteProfile(id);
+      await renderProfilesList();
+    } catch (e) {
+      showToast('Delete failed', true);
+    }
   }
   
   function escapeHtml(str) {
@@ -1481,6 +1469,33 @@
       .replace(/>/g, '&gt;')
       .replace(/\"/g, '&quot;')
       .replace(/'/g, '&#039;');
+  }
+
+  // Backend API helpers
+  async function apiListProfiles() {
+    const r = await fetch('/api/profiles');
+    if (!r.ok) return [];
+    return r.json();
+  }
+  async function apiGetProfile(id) {
+    const r = await fetch(`/api/profiles/${id}`);
+    if (!r.ok) return null;
+    return r.json();
+  }
+  async function apiCreateProfile(name, state) {
+    const r = await fetch('/api/profiles', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, state }) });
+    if (!r.ok) throw new Error('create_failed');
+    return r.json();
+  }
+  async function apiUpdateProfile(id, name, state) {
+    const r = await fetch(`/api/profiles/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, state }) });
+    if (!r.ok) throw new Error('update_failed');
+    return r.json();
+  }
+  async function apiDeleteProfile(id) {
+    const r = await fetch(`/api/profiles/${id}`, { method: 'DELETE' });
+    if (!r.ok) throw new Error('delete_failed');
+    return r.json();
   }
 
   // Seed a couple of demo profiles if none exist yet
