@@ -464,6 +464,25 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    
+    /* Profile badge */
+    .profile-badge {
+      position: fixed;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 0.9em;
+      z-index: 1000;
+      max-width: 60vw;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   </style>
 </head>
 <body>
@@ -628,6 +647,9 @@
 <!-- Background badge -->
 <div class="bg-badge" id="bgBadge" style="display: none;">Background: Default</div>
 
+<!-- Profile badge -->
+<div class="profile-badge" id="profileBadge" style="display: none;">Profile: Untitled Profile</div>
+
 <!-- Background Settings Modal -->
 <div class="modal-overlay" id="bgModal">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="bgModalTitle">
@@ -636,6 +658,10 @@
       <span class="modal-close" onclick="closeBackgroundModal()">×</span>
     </div>
     <div class="modal-body">
+      <div class="bg-form-group">
+        <label for="profileNameInput">Profile name</label>
+        <input type="text" id="profileNameInput" placeholder="e.g., Trail Overview" />
+      </div>
       <div class="bg-form-group">
         <label for="bgNameInput">Background name</label>
         <input type="text" id="bgNameInput" placeholder="e.g., Mountain Landscape" />
@@ -1009,6 +1035,7 @@
   let isEditingInstructions = false;
   let isDraggingInstructions = false;
   let currentBackground = { url: null, name: 'Default', isDataUrl: false };
+  let currentProfile = { name: 'Untitled Profile' };
   
   // Initialize the tool
   document.addEventListener('DOMContentLoaded', function() {
@@ -1050,6 +1077,13 @@
     const bgNameInput = document.getElementById('bgNameInput');
     const bgUrlInput = document.getElementById('bgUrlInput');
     const bgFileInput = document.getElementById('bgFileInput');
+    const profileNameInput = document.getElementById('profileNameInput');
+    if (profileNameInput) {
+      profileNameInput.addEventListener('input', () => {
+        currentProfile.name = profileNameInput.value || 'Untitled Profile';
+        updateProfileBadge();
+      });
+    }
     
     if (bgNameInput) {
       bgNameInput.addEventListener('input', () => {
@@ -1119,8 +1153,10 @@
     const urlInput = document.getElementById('bgUrlInput');
     const preview = document.getElementById('bgPreview');
     const hint = document.getElementById('bgShareHint');
+    const profileNameInput = document.getElementById('profileNameInput');
     if (nameInput) nameInput.value = currentBackground.name || '';
     if (urlInput) urlInput.value = currentBackground.isDataUrl ? '' : (currentBackground.url || '');
+    if (profileNameInput) profileNameInput.value = currentProfile.name || '';
     if (preview) preview.src = currentBackground.url || '';
     if (hint) hint.textContent = currentBackground.isDataUrl ? 'Using local image. Share link will not include this file.' : 'Changes apply in real-time.';
     modal.style.display = 'flex';
@@ -1168,6 +1204,13 @@
     badge.textContent = 'Background: ' + (currentBackground.name || 'Untitled');
   }
   
+  function updateProfileBadge() {
+    const badge = document.getElementById('profileBadge');
+    if (!badge) return;
+    badge.style.display = currentProfile && currentProfile.name ? 'block' : 'none';
+    badge.textContent = 'Profile: ' + (currentProfile.name || 'Untitled Profile');
+  }
+  
   // (Share link removed; snapshot link supersedes it)
 
   // ===================== Snapshot Sharing =====================
@@ -1201,6 +1244,7 @@
   
   function getCurrentState() {
     const state = {
+      profile: { name: currentProfile.name },
       bg: { url: currentBackground.url, name: currentBackground.name },
       hotspots: hotspots.map(h => ({
         x: h.x,
@@ -1217,6 +1261,11 @@
   
   function applyState(state) {
     if (!state) return;
+    // Profile
+    if (state.profile && state.profile.name) {
+      currentProfile.name = state.profile.name;
+      updateProfileBadge();
+    }
     // Background
     if (state.bg && state.bg.url) {
       setBackground(state.bg.url, state.bg.name || 'Shared Background', false);
