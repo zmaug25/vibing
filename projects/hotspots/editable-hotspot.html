@@ -1611,6 +1611,20 @@
     }
   }
   
+  function toAbsoluteUrl(url) {
+    if (!url) return '';
+    try {
+      return new URL(url, window.location.origin).href;
+    } catch (_) {
+      return url;
+    }
+  }
+  
+  function isNonShareableUrl(url) {
+    if (!url) return false;
+    return url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('file:');
+  }
+  
   function decodeState(str) {
     try {
       const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
@@ -1628,14 +1642,14 @@
   function getCurrentState() {
     const state = {
       profile: { name: currentProfile.name },
-      bg: { url: currentBackground.url, name: currentBackground.name },
+      bg: { url: toAbsoluteUrl(currentBackground.url), name: currentBackground.name },
       hotspots: hotspots.map(h => ({
         x: h.x,
         y: h.y,
         color: h.color,
         title: h.title,
         description: h.description,
-        mediaUrl: h.mediaUrl || '',
+        mediaUrl: isNonShareableUrl(h.mediaUrl) ? '' : toAbsoluteUrl(h.mediaUrl || ''),
         icon: h.icon || 'plus'
       }))
     };

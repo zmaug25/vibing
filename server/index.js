@@ -187,8 +187,10 @@ app.use('/uploads', express.static(uploadRoot));
 
 app.post('/api/upload', upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'no_file' });
-  const rel = path.relative(publicDir, req.file.path);
-  return res.json({ url: `/uploads/${path.basename(req.file.path)}` });
+  const filename = path.basename(req.file.path);
+  const base = process.env.PUBLIC_BASE_URL || '';
+  const url = base ? `${base.replace(/\/$/, '')}/uploads/${filename}` : `/uploads/${filename}`;
+  return res.json({ url });
 });
 
 const port = process.env.PORT || 8080;
