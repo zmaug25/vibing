@@ -1,5 +1,5 @@
 app = "zmhotspot"
-primary_region = "iad"
+primary_region = "den"
 
 [build]
 
