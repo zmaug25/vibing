@@ -1,21 +1,36 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import { Input } from './ui/input';
-import { autofillTexts } from './aiClient';
 import { Edit2, Plus } from 'lucide-react';
 import { interfaceConfigs, InterfaceConfig } from '../data/interfaces';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from './ui/dialog';
+import { Textarea } from './ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
 
 interface GalleryProps {
   onSelectInterface: (config: InterfaceConfig) => void;
 }
 
 export default function Gallery({ onSelectInterface }: GalleryProps) {
-  const [open, setOpen] = React.useState(false);
-  const [scenario, setScenario] = React.useState('');
-  const [working, setWorking] = React.useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [prompt, setPrompt] = useState('');
+  const [selectedId, setSelectedId] = useState(interfaceConfigs[0]?.id ?? '');
+
   // Group interfaces by category
   const groupedInterfaces = interfaceConfigs.reduce((acc, config) => {
     if (!acc[config.category]) {
@@ -25,6 +40,23 @@ export default function Gallery({ onSelectInterface }: GalleryProps) {
     return acc;
   }, {} as Record<string, InterfaceConfig[]>);
 
+  const selectedConfig = useMemo(
+    () => interfaceConfigs.find((c) => c.id === selectedId) || interfaceConfigs[0],
+    [selectedId],
+  );
+
+  const handleRunAI = () => {
+    if (!selectedConfig) return;
+    try {
+      sessionStorage.setItem(
+        'aiCustomizationContext',
+        JSON.stringify({ interfaceId: selectedConfig.id, prompt }),
+      );
+    } catch {}
+    setAiOpen(false);
+    onSelectInterface(selectedConfig);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto">
@@ -33,50 +65,58 @@ export default function Gallery({ onSelectInterface }: GalleryProps) {
             <h1 className="text-4xl font-bold mb-2">UI Interface Library</h1>
             <p className="text-gray-600">Choose an interface template to customize and export</p>
           </div>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-2" variant="outline">
-                <Plus className="w-4 h-4" />
-                Customize with AI
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Describe your scenario</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3">
-                <Input
-                  placeholder="e.g., Call routing for a medical clinic after-hours"
-                  value={scenario}
-                  onChange={(e) => setScenario(e.target.value)}
-                />
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                  <Button
-                    onClick={async () => {
-                      if (!scenario.trim()) { setOpen(false); return; }
-                      try {
-                        setWorking(true);
-                        // For simplicity, apply to the first interface category item as a demo
-                        const first = interfaceConfigs[0];
-                        const fields = first.defaultTexts.map((t) => ({ ...t, value: `${t.value}\nContext: ${scenario}` }));
-                        const values = await autofillTexts(first.id, fields);
-                        // Override defaults so when user clicks Edit it shows the AI content
-                        first.defaultTexts = first.defaultTexts.map((t) => values[t.id] ? { ...t, value: values[t.id] } : t);
-                        setOpen(false);
-                      } finally {
-                        setWorking(false);
-                      }
-                    }}
-                    disabled={working}
-                  >
-                    {working ? 'Generating…' : 'Generate'}
-                  </Button>
+          <div className="flex items-center gap-3">
+            <Dialog open={aiOpen} onOpenChange={setAiOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Edit2 className="w-4 h-4" />
+                  Customize with AI
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Customize with AI</DialogTitle>
+                  <DialogDescription>
+                    Provide context or instructions for how you want the UI text customized.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Choose interface</label>
+                    <Select value={selectedId} onValueChange={setSelectedId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select an interface" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {interfaceConfigs.map((cfg) => (
+                          <SelectItem key={cfg.id} value={cfg.id}>
+                            {cfg.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Instructions for AI</label>
+                    <Textarea
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                      placeholder="e.g., Make the tone formal and change the call-to-action to Schedule Demo"
+                      className="min-h-[120px]"
+                    />
+                  </div>
                 </div>
-                <p className="text-xs text-gray-500">AI will rewrite the interface text to match your scenario. Open any template to see the changes.</p>
-              </div>
-            </DialogContent>
-          </Dialog>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setAiOpen(false)}>Cancel</Button>
+                  <Button onClick={handleRunAI} disabled={!selectedId}>Continue</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            <Button className="flex items-center gap-2" disabled>
+              <Plus className="w-4 h-4" />
+              Add New Interface
+            </Button>
+          </div>
         </div>
 
         {Object.entries(groupedInterfaces).map(([category, configs]) => (
