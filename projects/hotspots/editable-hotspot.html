@@ -3,10 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <title>Editable Interactive Hotspot Tool</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     body {
       margin: 0;
-      font-family: 'Arial', sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
       background-color: #111;
       color: #fff;
       overflow: hidden;
@@ -367,6 +370,22 @@
       cursor: move;
       user-select: none;
     }
+    .instruction-overlay .instruction-close {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      font-size: 16px;
+      color: #ccc;
+      cursor: pointer;
+      background: rgba(0,0,0,0.4);
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .instruction-overlay .instruction-close:hover { color: #fff; }
     
     .instruction-overlay h3 {
       margin: 0 0 10px 0;
@@ -495,10 +514,10 @@
 </div>
 
 <!-- Mode Toggle -->
-<div class="mode-toggle">
-  <button class="mode-btn active" onclick="setMode('view')">View Mode</button>
-  <button class="mode-btn" onclick="setMode('edit')">Edit Mode</button>
-  <button class="mode-btn" onclick="addNewHotspot()" style="background: rgba(0, 255, 0, 0.7);">+ New Hotspot</button>
+<div class="mode-toggle" id="controlPanel" style="display:none;">
+  <button class="mode-btn active" onclick="setMode('view')">View</button>
+  <button class="mode-btn" onclick="setMode('edit')">Edit</button>
+  <button class="mode-btn" onclick="addNewHotspot()" style="background: rgba(0, 255, 0, 0.7);">+ Hotspot</button>
   <button class="mode-btn" onclick="openBackgroundModal()" style="background: rgba(0, 140, 255, 0.7);">Background</button>
   <button class="mode-btn" onclick="openProfilesModal()" style="background: rgba(255, 165, 0, 0.8);">Profiles</button>
 </div>
@@ -641,6 +660,7 @@
 
 <!-- Instruction Overlay -->
 <div class="instruction-overlay" id="instructionOverlay">
+  <span class="instruction-close" onclick="dismissInstructionOverlay(event)">×</span>
   <h3>Interactive Hotspot Demo</h3>
   <p>Click on the colored circles to explore different areas of this landscape. Each hotspot reveals information about specific features.</p>
 </div>
@@ -649,7 +669,7 @@
 <div class="bg-badge" id="bgBadge" style="display: none;">Background: Default</div>
 
 <!-- Profile badge -->
-<div class="profile-badge" id="profileBadge" style="display: none;">Profile: Untitled Profile</div>
+<div class="profile-badge" id="profileBadge" style="display: none; visibility: hidden;">Profile: Untitled Profile</div>
 
 <!-- Background Settings Modal -->
 <div class="modal-overlay" id="bgModal">
@@ -1059,6 +1079,8 @@
     initializeHotspots();
     setupEventListeners();
     updateProfileBadge();
+    restoreInstructionOverlay();
+    setupControlPanelHotkey();
   });
   
   function initializeHotspots() {
@@ -1165,6 +1187,18 @@
     document.getElementById('instructionFontSize').addEventListener('input', updateInstructionsInRealTime);
     document.getElementById('popupFontFamily').addEventListener('change', updatePopupFonts);
     document.getElementById('popupFontSize').addEventListener('input', updatePopupFonts);
+  }
+
+  function setupControlPanelHotkey() {
+    document.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'c') {
+        const panel = document.getElementById('controlPanel');
+        if (panel) {
+          const isHidden = panel.style.display === 'none' || panel.style.display === '';
+          panel.style.display = isHidden ? 'block' : 'none';
+        }
+      }
+    });
   }
 
   // ===================== Profiles Manager =====================
@@ -1347,7 +1381,9 @@
   function updateProfileBadge() {
     const badge = document.getElementById('profileBadge');
     if (!badge) return;
-    badge.style.display = currentProfile && currentProfile.name ? 'block' : 'none';
+    // keep hidden to reduce UI noise
+    badge.style.display = 'block';
+    badge.style.visibility = 'hidden';
     badge.textContent = 'Profile: ' + (currentProfile.name || 'Untitled Profile');
   }
   
@@ -1870,6 +1906,23 @@
     e.preventDefault();
   }
   
+  function dismissInstructionOverlay(e) {
+    e.stopPropagation();
+    const overlay = document.getElementById('instructionOverlay');
+    if (overlay) {
+      overlay.style.display = 'none';
+      try { localStorage.setItem('instructionOverlayDismissed', '1'); } catch (_) {}
+    }
+  }
+
+  function restoreInstructionOverlay() {
+    try {
+      const dismissed = localStorage.getItem('instructionOverlayDismissed') === '1';
+      const overlay = document.getElementById('instructionOverlay');
+      if (overlay) overlay.style.display = dismissed ? 'none' : 'block';
+    } catch (_) {}
+  }
+
 
   
   function saveHotspot() {
