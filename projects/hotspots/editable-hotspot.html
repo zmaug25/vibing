@@ -1318,7 +1318,7 @@
     return 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
   }
   
-  function saveCurrentProfile() {
+  async function saveCurrentProfile() {
     const nameInput = document.getElementById('profilesNameInput');
     const name = (nameInput && nameInput.value.trim()) || currentProfile.name || 'Untitled Profile';
     const state = getCurrentState();
@@ -1326,24 +1326,19 @@
     state.profile.name = name;
     currentProfile.name = name;
     updateProfileBadge();
-    
-    const profiles = loadProfilesFromStorage();
-    if (currentProfileId) {
-      const idx = profiles.findIndex(p => p.id === currentProfileId);
-      if (idx !== -1) {
-        profiles[idx] = { ...profiles[idx], name, state };
+    try {
+      if (currentProfileId) {
+        const updated = await apiUpdateProfile(currentProfileId, name, state);
+        currentProfileId = updated.id;
       } else {
-        const id = generateId();
-        currentProfileId = id;
-        profiles.push({ id, name, createdAt: new Date().toISOString(), state });
+        const created = await apiCreateProfile(name, state);
+        currentProfileId = created.id;
       }
-    } else {
-      const id = generateId();
-      currentProfileId = id;
-      profiles.push({ id, name, createdAt: new Date().toISOString(), state });
+      await renderProfilesList();
+      showToast('Saved changes to profile');
+    } catch (e) {
+      showToast('Save failed. Too large or network error.', true);
     }
-    persistProfiles(profiles);
-    renderProfilesList();
   }
 
   function updateCurrentProfileInfo() {
@@ -1381,15 +1376,13 @@
     const state = getCurrentState();
     state.profile = state.profile || {};
     state.profile.name = name;
-    const profiles = loadProfilesFromStorage();
-    const id = generateId();
-    profiles.push({ id, name, createdAt: new Date().toISOString(), state });
-    const ok = await persistProfiles(profiles);
-    renderProfilesList();
-    if (ok) {
+    try {
+      const created = await apiCreateProfile(name, state);
+      currentProfileId = created.id;
+      await renderProfilesList();
       showToast('Saved new profile');
-    } else {
-      showToast('Save failed. Data may be too large.', true);
+    } catch (e) {
+      showToast('Save failed. Too large or network error.', true);
     }
   }
 
