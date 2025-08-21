@@ -3,10 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <title>Editable Interactive Hotspot Tool</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     body {
       margin: 0;
-      font-family: 'Arial', sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
       background-color: #111;
       color: #fff;
       overflow: hidden;
@@ -172,6 +175,8 @@
       border: 2px solid rgba(255, 255, 255, 0.2);
       min-width: 300px;
       z-index: 1000;
+      max-height: calc(100vh - 40px);
+      overflow: auto;
     }
     
     .editor-panel h3 {
@@ -321,17 +326,7 @@
     }
     
     /* Coordinates display */
-    .coordinates {
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      background: rgba(0, 0, 0, 0.8);
-      padding: 10px;
-      border-radius: 5px;
-      font-size: 0.9em;
-      color: #ccc;
-      transition: background 0.3s ease;
-    }
+    .coordinates { display: none; }
     
     /* Real-time update indicator */
     .real-time-indicator {
@@ -367,6 +362,22 @@
       cursor: move;
       user-select: none;
     }
+    .instruction-overlay .instruction-close {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      font-size: 16px;
+      color: #ccc;
+      cursor: pointer;
+      background: rgba(0,0,0,0.4);
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .instruction-overlay .instruction-close:hover { color: #fff; }
     
     .instruction-overlay h3 {
       margin: 0 0 10px 0;
@@ -385,6 +396,107 @@
       border-color: rgba(255, 255, 0, 0.6);
       box-shadow: 0 0 10px rgba(255, 255, 0, 0.3);
     }
+    
+    /* Background settings modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+    
+    .modal {
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 10px;
+      width: 720px;
+      max-width: calc(100% - 40px);
+      color: #fff;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid #222;
+    }
+    
+    .modal-title { font-size: 1.1em; margin: 0; }
+    .modal-close { cursor: pointer; color: #aaa; font-size: 20px; }
+    .modal-close:hover { color: #fff; }
+    
+    .modal-body { padding: 16px; overflow-y: auto; overflow-x: hidden; }
+    .modal-footer { padding: 12px 16px; border-top: 1px solid #222; display: flex; gap: 10px; justify-content: space-between; align-items: center; }
+    
+    .bg-form-group { margin-bottom: 12px; }
+    .bg-form-group label { display: block; margin-bottom: 6px; color: #ccc; font-size: 0.9em; }
+    .bg-form-group input[type="text"] { width: 100%; padding: 8px; border: 1px solid #444; border-radius: 6px; background: #1a1a1a; color: #fff; }
+    .bg-form-hint { font-size: 0.8em; color: #999; margin-top: 6px; }
+    
+    .bg-preview {
+      border: 1px solid #333;
+      border-radius: 8px;
+      background: #0d0d0d;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 180px;
+      margin-top: 10px;
+    }
+    .bg-preview img { max-width: 100%; max-height: 100%; display: block; }
+    
+    .btn { padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em; }
+    .btn-ghost { background: rgba(100, 100, 100, 0.7); color: #fff; }
+    .btn-ghost:hover { background: rgba(100, 100, 100, 0.9); }
+    .btn-accent { background: rgba(0, 140, 255, 0.8); color: #fff; }
+    .btn-accent:hover { background: rgba(0, 140, 255, 1); }
+    
+    /* Background badge */
+    .bg-badge {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 0.9em;
+      z-index: 1000;
+      max-width: 60vw;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    /* Profile badge */
+    .profile-badge {
+      position: fixed;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 0.9em;
+      z-index: 1000;
+      max-width: 60vw;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   </style>
 </head>
 <body>
@@ -397,10 +509,12 @@
 </div>
 
 <!-- Mode Toggle -->
-<div class="mode-toggle">
-  <button class="mode-btn active" onclick="setMode('view')">View Mode</button>
-  <button class="mode-btn" onclick="setMode('edit')">Edit Mode</button>
-  <button class="mode-btn" onclick="addNewHotspot()" style="background: rgba(0, 255, 0, 0.7);">+ New Hotspot</button>
+<div class="mode-toggle" id="controlPanel" style="display:none;">
+  <button class="mode-btn active" onclick="setMode('view')">View</button>
+  <button class="mode-btn" onclick="setMode('edit')">Edit</button>
+  <button class="mode-btn" onclick="addNewHotspot()" style="background: rgba(0, 255, 0, 0.7);">+ Hotspot</button>
+  <button class="mode-btn" onclick="openBackgroundModal()" style="background: rgba(0, 140, 255, 0.7);">Background</button>
+  <button class="mode-btn" onclick="openProfilesModal()" style="background: rgba(255, 165, 0, 0.8);">Profiles</button>
 </div>
 
 <!-- Editor Panel -->
@@ -523,7 +637,7 @@
   
   <div class="editor-buttons">
     <button class="editor-btn btn-primary" onclick="saveHotspot()">Save</button>
-    <button class="editor-btn btn-secondary" onclick="cancelEdit()">Cancel</button>
+    <button class="editor-btn btn-secondary" onclick="cancelEdit()">Close</button>
     <button class="editor-btn btn-danger" onclick="deleteHotspot()">Delete</button>
     <button class="editor-btn btn-secondary" onclick="editInstructions()">Edit Instructions</button>
   </div>
@@ -541,8 +655,403 @@
 
 <!-- Instruction Overlay -->
 <div class="instruction-overlay" id="instructionOverlay">
+  <span class="instruction-close" onclick="dismissInstructionOverlay(event)">×</span>
   <h3>Interactive Hotspot Demo</h3>
   <p>Click on the colored circles to explore different areas of this landscape. Each hotspot reveals information about specific features.</p>
+</div>
+
+<!-- Background badge -->
+<div class="bg-badge" id="bgBadge" style="display: none; visibility: hidden;">Background: Default</div>
+
+<!-- Profile badge -->
+<div class="profile-badge" id="profileBadge" style="display: none; visibility: hidden;">Profile: Untitled Profile</div>
+
+<!-- Background Settings Modal -->
+<div class="modal-overlay" id="bgModal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="bgModalTitle">
+    <div class="modal-header">
+      <h4 class="modal-title" id="bgModalTitle">Background Settings</h4>
+      <span class="modal-close" onclick="closeBackgroundModal()">×</span>
+    </div>
+    <div class="modal-body">
+      <div class="bg-form-group">
+        <label for="profileNameInput">Profile name</label>
+        <input type="text" id="profileNameInput" placeholder="e.g., Trail Overview" />
+      </div>
+      <div class="bg-form-group">
+        <label for="bgNameInput">Background name</label>
+        <input type="text" id="bgNameInput" placeholder="e.g., Mountain Landscape" />
+      </div>
+      <div class="bg-form-group">
+        <label for="bgUrlInput">Image URL</label>
+        <input type="text" id="bgUrlInput" placeholder="https://example.com/image.jpg" />
+        <div class="bg-form-hint">Use a publicly accessible URL for shareable links.</div>
+      </div>
+      <div class="bg-form-group">
+        <label for="bgFileInput">Or upload an image</label>
+        <input type="file" id="bgFileInput" accept="image/*" />
+        <div class="bg-form-hint">Local uploads preview instantly but are not included in share links.</div>
+      </div>
+      <div class="bg-form-group">
+        <label>Preview</label>
+        <div class="bg-preview">
+          <img id="bgPreview" alt="Background preview" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeBackgroundModal()">Close</button>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <span id="bgShareHint" class="bg-form-hint">Changes apply in real-time.</span>
+        <button class="btn btn-accent" onclick="copySnapshotLink()" title="Copy link with background + hotspots">Copy snapshot link</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Profiles Manager Modal -->
+  <div class="modal-overlay" id="profilesModal" style="display: none;">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="profilesModalTitle">
+      <div class="modal-header">
+        <h4 class="modal-title" id="profilesModalTitle">Profiles</h4>
+        <span class="modal-close" onclick="closeProfilesModal()">×</span>
+      </div>
+      <div class="modal-body">
+        <div class="bg-form-group">
+          <label>Current profile</label>
+          <div id="currentProfileInfo" style="font-size:0.9em; color:#ccc;">None loaded</div>
+        </div>
+        <div class="bg-form-group" style="display:flex; gap:10px; flex-wrap: wrap;">
+          <button class="btn btn-accent" onclick="saveProfileChanges()" id="saveChangesBtn" disabled>Save changes</button>
+          <input type="text" id="profilesNameInput" placeholder="New profile name" style="flex:1; min-width: 200px;" />
+          <button class="btn btn-ghost" onclick="saveAsNewProfile()">Save as new</button>
+        </div>
+        <div class="bg-form-group">
+          <label>Saved profiles</label>
+          <div id="profilesList" class="bg-preview" style="height:auto; padding:10px; display:block; background:#121212; border:1px solid #333;">
+            <!-- Profiles will be listed here -->
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeProfilesModal()">Close</button>
+      </div>
+    </div>
+  </div>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 </div>
 
 <script>
@@ -555,14 +1064,25 @@
   let isAddingNewHotspot = false;
   let isEditingInstructions = false;
   let isDraggingInstructions = false;
+  let currentBackground = { url: null, name: 'Default', isDataUrl: false };
+  let currentProfile = { name: 'Untitled Profile' };
+  let currentProfileId = null;
+  const PROFILES_KEY = 'hotspotProfiles';
   
   // Initialize the tool
   document.addEventListener('DOMContentLoaded', function() {
+    initializeBackgroundFromQuery();
+    initializeSnapshotFromQuery();
     initializeHotspots();
     setupEventListeners();
+    updateProfileBadge();
+    restoreInstructionOverlay();
+    setupControlPanelHotkey();
   });
   
   function initializeHotspots() {
+    // If hotspots were loaded from a snapshot, don't add samples
+    if (hotspots && hotspots.length > 0) return;
     // Add some sample hotspots with hex colors and different icons
     addHotspot(25, 30, '#ff0000', 'Mountain Peak', 'This majestic peak stands at over 14,000 feet above sea level.', null, 'star');
     addHotspot(65, 25, '#00ff00', 'Alpine Forest', 'This dense forest is home to various wildlife including elk and deer.', null, 'info');
@@ -587,6 +1107,53 @@
     
     // Background click for adding new hotspots
     container.addEventListener('click', handleBackgroundClick);
+    
+    // Background settings listeners
+    const bgNameInput = document.getElementById('bgNameInput');
+    const bgUrlInput = document.getElementById('bgUrlInput');
+    const bgFileInput = document.getElementById('bgFileInput');
+    const profilesNameInput = document.getElementById('profilesNameInput');
+    const profileNameInput = document.getElementById('profileNameInput');
+    if (profileNameInput) {
+      profileNameInput.addEventListener('input', () => {
+        currentProfile.name = profileNameInput.value || 'Untitled Profile';
+        updateProfileBadge();
+      });
+    }
+    
+    if (bgNameInput) {
+      bgNameInput.addEventListener('input', () => {
+        currentBackground.name = bgNameInput.value || 'Untitled';
+        updateBackgroundBadge();
+      });
+    }
+    if (bgUrlInput) {
+      bgUrlInput.addEventListener('input', () => {
+        const url = bgUrlInput.value.trim();
+        if (url.length === 0) return;
+        setBackground(url, bgNameInput.value || currentBackground.name, false);
+      });
+    }
+    if (bgFileInput) {
+      bgFileInput.addEventListener('change', async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        try {
+          const url = await uploadFileToServer(file);
+          setBackground(url, bgNameInput.value || currentBackground.name, false);
+          const hint = document.getElementById('bgShareHint');
+          if (hint) hint.textContent = 'Background uploaded.';
+        } catch (_) {
+          const hint = document.getElementById('bgShareHint');
+          if (hint) hint.textContent = 'Upload failed. Try a smaller file (<=20MB).';
+        }
+      });
+    }
+    if (profilesNameInput) {
+      profilesNameInput.addEventListener('input', () => {
+        // no-op, save on button
+      });
+    }
     
     // Real-time editor updates
     document.getElementById('posX').addEventListener('input', updateHotspotInRealTime);
@@ -618,6 +1185,540 @@
     document.getElementById('instructionFontSize').addEventListener('input', updateInstructionsInRealTime);
     document.getElementById('popupFontFamily').addEventListener('change', updatePopupFonts);
     document.getElementById('popupFontSize').addEventListener('input', updatePopupFonts);
+  }
+
+  function setupControlPanelHotkey() {
+    document.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'c') {
+        const panel = document.getElementById('controlPanel');
+        if (panel) {
+          const isHidden = panel.style.display === 'none' || panel.style.display === '';
+          panel.style.display = isHidden ? 'block' : 'none';
+        }
+      }
+    });
+  }
+
+  // ===================== Profiles Manager =====================
+  async function openProfilesModal() {
+    const modal = document.getElementById('profilesModal');
+    if (!modal) return;
+    // Ensure the profiles modal is not inside a hidden parent (e.g., bgModal overlay)
+    const bgOverlay = document.getElementById('bgModal');
+    if (bgOverlay && bgOverlay.contains(modal)) {
+      document.body.appendChild(modal);
+    }
+    updateCurrentProfileInfo();
+    updateSaveChangesButton();
+    const nameInput = document.getElementById('profilesNameInput');
+    if (nameInput) nameInput.value = currentProfile.name || '';
+    await renderProfilesList();
+    modal.style.display = 'flex';
+  }
+  
+  function closeProfilesModal() {
+    const modal = document.getElementById('profilesModal');
+    if (modal) modal.style.display = 'none';
+  }
+  
+  function loadProfilesFromStorage() {
+    try {
+      const raw = localStorage.getItem(PROFILES_KEY);
+      if (!raw) return [];
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    } catch (_) {
+      return [];
+    }
+  }
+  
+  function saveProfilesToStorage(profiles) {
+    try {
+      localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  // IndexedDB fallback for large profile states
+  function getProfilesDb() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open('HotspotDB', 1);
+      request.onupgradeneeded = (e) => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains('profiles')) {
+          db.createObjectStore('profiles', { keyPath: 'id' });
+        }
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async function idbPutProfileState(id, state) {
+    const db = await getProfilesDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('profiles', 'readwrite');
+      const store = tx.objectStore('profiles');
+      store.put({ id, state });
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  async function idbGetProfileState(id) {
+    const db = await getProfilesDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('profiles', 'readonly');
+      const store = tx.objectStore('profiles');
+      const req = store.get(id);
+      req.onsuccess = () => resolve(req.result ? req.result.state : null);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function persistProfiles(profiles) {
+    // First try naive save
+    if (saveProfilesToStorage(profiles)) return true;
+    // Move large states to IndexedDB selectively
+    let changed = false;
+    for (let i = 0; i < profiles.length; i++) {
+      const p = profiles[i];
+      if (p && p.state) {
+        try {
+          const s = JSON.stringify(p.state);
+          if (s.length > 200000) { // ~200KB threshold
+            await idbPutProfileState(p.id, p.state);
+            profiles[i] = { id: p.id, name: p.name, createdAt: p.createdAt, stateInIdb: true };
+            changed = true;
+          }
+        } catch (_) {
+          // If stringify fails, move to IDB
+          await idbPutProfileState(p.id, p.state);
+          profiles[i] = { id: p.id, name: p.name, createdAt: p.createdAt, stateInIdb: true };
+          changed = true;
+        }
+      }
+    }
+    if (changed && saveProfilesToStorage(profiles)) return true;
+    // As last resort, move all states to IDB
+    for (let i = 0; i < profiles.length; i++) {
+      const p = profiles[i];
+      if (p && p.state) {
+        await idbPutProfileState(p.id, p.state);
+        profiles[i] = { id: p.id, name: p.name, createdAt: p.createdAt, stateInIdb: true };
+      }
+    }
+    return saveProfilesToStorage(profiles);
+  }
+  
+  function generateId() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+  }
+  
+  async function saveCurrentProfile() {
+    const nameInput = document.getElementById('profilesNameInput');
+    const name = (nameInput && nameInput.value.trim()) || currentProfile.name || 'Untitled Profile';
+    const state = getCurrentState();
+    state.profile = state.profile || {};
+    state.profile.name = name;
+    currentProfile.name = name;
+    updateProfileBadge();
+    try {
+      if (currentProfileId) {
+        const updated = await apiUpdateProfile(currentProfileId, name, state);
+        currentProfileId = updated.id;
+      } else {
+        const created = await apiCreateProfile(name, state);
+        currentProfileId = created.id;
+      }
+      await renderProfilesList();
+      showToast('Saved changes to profile');
+    } catch (e) {
+      showToast('Save failed. Too large or network error.', true);
+    }
+  }
+
+  function updateCurrentProfileInfo() {
+    const info = document.getElementById('currentProfileInfo');
+    if (!info) return;
+    if (currentProfileId) {
+      info.textContent = `${currentProfile.name} (id: ${currentProfileId.slice(0, 8)}…)`;
+    } else {
+      info.textContent = 'None loaded';
+    }
+  }
+
+  function updateSaveChangesButton() {
+    const btn = document.getElementById('saveChangesBtn');
+    if (!btn) return;
+    btn.disabled = !currentProfileId;
+  }
+
+  async function saveProfileChanges() {
+    if (!currentProfileId) return;
+    const state = getCurrentState();
+    const name = currentProfile.name || (state.profile && state.profile.name) || 'Untitled Profile';
+    try {
+      await apiUpdateProfile(currentProfileId, name, state);
+      await renderProfilesList();
+      showToast('Saved changes to profile');
+    } catch (e) {
+      showToast('Save failed. Too large or network error.', true);
+    }
+  }
+
+  async function saveAsNewProfile() {
+    const nameInput = document.getElementById('profilesNameInput');
+    const name = (nameInput && nameInput.value.trim()) || `${currentProfile.name} (copy)` || 'New Profile';
+    const state = getCurrentState();
+    state.profile = state.profile || {};
+    state.profile.name = name;
+    try {
+      const created = await apiCreateProfile(name, state);
+      currentProfileId = created.id;
+      await renderProfilesList();
+      showToast('Saved new profile');
+    } catch (e) {
+      showToast('Save failed. Too large or network error.', true);
+    }
+  }
+
+  function showToast(message, isError = false) {
+    const indicator = document.getElementById('realTimeIndicator');
+    if (!indicator) return;
+    indicator.textContent = message;
+    indicator.style.background = isError ? 'rgba(255, 0, 0, 0.85)' : 'rgba(0, 180, 0, 0.85)';
+    indicator.classList.add('show');
+    setTimeout(() => {
+      indicator.classList.remove('show');
+      indicator.textContent = '✓ Changes applied in real-time';
+      indicator.style.background = 'rgba(0, 255, 0, 0.8)';
+    }, 1200);
+  }
+  
+  async function renderProfilesList() {
+    const container = document.getElementById('profilesList');
+    if (!container) return;
+    const profiles = await apiListProfiles();
+    if (!profiles || profiles.length === 0) {
+      container.innerHTML = '<div style="color:#aaa; padding:8px;">No profiles saved yet.</div>';
+      return;
+    }
+    container.innerHTML = '';
+    profiles.forEach(p => {
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.alignItems = 'center';
+      row.style.justifyContent = 'space-between';
+      row.style.padding = '6px 8px';
+      row.style.borderBottom = '1px solid #1f1f1f';
+      const left = document.createElement('div');
+      left.innerHTML = `<div style=\"font-weight:600;\">${escapeHtml(p.name)}</div><div style=\"font-size:12px; color:#888;\">${new Date(p.updated_at || p.created_at || Date.now()).toLocaleString()}</div>`;
+      const right = document.createElement('div');
+      right.style.display = 'flex';
+      right.style.gap = '8px';
+      const loadBtn = document.createElement('button');
+      loadBtn.className = 'btn btn-accent';
+      loadBtn.textContent = 'Load';
+      loadBtn.onclick = () => loadProfile(p.id);
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn btn-ghost';
+      delBtn.textContent = 'Delete';
+      delBtn.onclick = () => deleteProfile(p.id);
+      right.appendChild(loadBtn);
+      right.appendChild(delBtn);
+      row.appendChild(left);
+      row.appendChild(right);
+      container.appendChild(row);
+    });
+  }
+  
+  async function loadProfile(id) {
+    const p = await apiGetProfile(id);
+    if (!p) return;
+    if (p.state) applyState(p.state);
+    currentProfile.name = p.name || (p.state && p.state.profile && p.state.profile.name) || 'Untitled Profile';
+    currentProfileId = p.id;
+    updateProfileBadge();
+    closeProfilesModal();
+  }
+  
+  async function deleteProfile(id) {
+    try {
+      await apiDeleteProfile(id);
+      await renderProfilesList();
+    } catch (e) {
+      showToast('Delete failed', true);
+    }
+  }
+  
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  // Backend API helpers
+  async function apiListProfiles() {
+    const r = await fetch('/api/profiles');
+    if (!r.ok) return [];
+    return r.json();
+  }
+  async function apiGetProfile(id) {
+    const r = await fetch(`/api/profiles/${id}`);
+    if (!r.ok) return null;
+    return r.json();
+  }
+  async function apiCreateProfile(name, state) {
+    const r = await fetch('/api/profiles', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, state }) });
+    if (!r.ok) throw new Error('create_failed');
+    return r.json();
+  }
+  async function apiUpdateProfile(id, name, state) {
+    const r = await fetch(`/api/profiles/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, state }) });
+    if (!r.ok) throw new Error('update_failed');
+    return r.json();
+  }
+  async function apiDeleteProfile(id) {
+    const r = await fetch(`/api/profiles/${id}`, { method: 'DELETE' });
+    if (!r.ok) throw new Error('delete_failed');
+    return r.json();
+  }
+
+  // Seed a couple of demo profiles if none exist yet
+  function seedProfilesIfEmpty() {
+    const existing = loadProfilesFromStorage();
+    if (existing.length > 0) return;
+    const demo1 = {
+      id: generateId(),
+      name: 'Healthcare: OR Demo',
+      createdAt: new Date().toISOString(),
+      state: {
+        profile: { name: 'Healthcare: OR Demo' },
+        bg: {
+          url: 'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=1600&h=900&fit=crop',
+          name: 'Operating Room'
+        },
+        hotspots: [
+          { x: 22, y: 35, color: '#ff3b30', title: 'Vitals Monitor', description: 'Patient vitals and telemetry.', mediaUrl: '', icon: 'info' },
+          { x: 58, y: 62, color: '#34c759', title: 'Infusion Pump', description: 'Medication delivery system.', mediaUrl: '', icon: 'plus' }
+        ]
+      }
+    };
+    const demo2 = {
+      id: generateId(),
+      name: 'Healthcare: ICU Demo',
+      createdAt: new Date().toISOString(),
+      state: {
+        profile: { name: 'Healthcare: ICU Demo' },
+        bg: {
+          url: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1600&h=900&fit=crop',
+          name: 'ICU Room'
+        },
+        hotspots: [
+          { x: 30, y: 28, color: '#0064ff', title: 'Ventilator', description: 'Respiratory support equipment.', mediaUrl: '', icon: 'info' },
+          { x: 72, y: 70, color: '#ffcc00', title: 'Nurse Station', description: 'Observation and notes.', mediaUrl: '', icon: 'star' }
+        ]
+      }
+    };
+    saveProfilesToStorage([demo1, demo2]);
+  }
+
+  // ===================== Background Settings =====================
+  function openBackgroundModal() {
+    const modal = document.getElementById('bgModal');
+    if (!modal) return;
+    const nameInput = document.getElementById('bgNameInput');
+    const urlInput = document.getElementById('bgUrlInput');
+    const preview = document.getElementById('bgPreview');
+    const hint = document.getElementById('bgShareHint');
+    const profileNameInput = document.getElementById('profileNameInput');
+    if (nameInput) nameInput.value = currentBackground.name || '';
+    if (urlInput) urlInput.value = currentBackground.isDataUrl ? '' : (currentBackground.url || '');
+    if (profileNameInput) profileNameInput.value = currentProfile.name || '';
+    if (preview) preview.src = currentBackground.url || '';
+    if (hint) hint.textContent = currentBackground.isDataUrl ? 'Using local image. Share link will not include this file.' : 'Changes apply in real-time.';
+    modal.style.display = 'flex';
+  }
+  
+  function closeBackgroundModal() {
+    const modal = document.getElementById('bgModal');
+    if (modal) modal.style.display = 'none';
+  }
+  
+  function initializeBackgroundFromQuery() {
+    const params = new URLSearchParams(window.location.search);
+    const bgUrl = params.get('bgUrl');
+    const bgName = params.get('bgName');
+    if (bgUrl) {
+      setBackground(bgUrl, bgName || 'Shared Background', false);
+    } else {
+      // Initialize currentBackground from existing img element
+      const img = document.querySelector('#background-container img');
+      if (img && img.src) {
+        currentBackground.url = img.src;
+        currentBackground.name = 'Default';
+        currentBackground.isDataUrl = img.src.startsWith('data:');
+        updateBackgroundBadge();
+      }
+    }
+  }
+  
+  function setBackground(url, name, isDataUrl) {
+    const img = document.querySelector('#background-container img');
+    if (img) {
+      img.src = url;
+      img.alt = name || 'Background';
+    }
+    const preview = document.getElementById('bgPreview');
+    if (preview) preview.src = url;
+    currentBackground = { url, name: name || 'Untitled', isDataUrl: !!isDataUrl };
+    updateBackgroundBadge();
+    // Mark as dirty for current profile: enable Save changes button if a profile is loaded
+    updateSaveChangesButton();
+  }
+  
+  function updateBackgroundBadge() {
+    const badge = document.getElementById('bgBadge');
+    if (!badge) return;
+    // keep hidden to reduce UI noise
+    badge.style.display = 'block';
+    badge.style.visibility = 'hidden';
+    badge.textContent = 'Background: ' + (currentBackground.name || 'Untitled');
+  }
+  
+  function updateProfileBadge() {
+    const badge = document.getElementById('profileBadge');
+    if (!badge) return;
+    // keep hidden to reduce UI noise
+    badge.style.display = 'block';
+    badge.style.visibility = 'hidden';
+    badge.textContent = 'Profile: ' + (currentProfile.name || 'Untitled Profile');
+  }
+  
+  // (Share link removed; snapshot link supersedes it)
+
+  // ===================== Snapshot Sharing =====================
+  function encodeState(stateObj) {
+    try {
+      const json = JSON.stringify(stateObj);
+      const bytes = new TextEncoder().encode(json);
+      let binary = '';
+      bytes.forEach(b => binary += String.fromCharCode(b));
+      const base64 = btoa(binary)
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+      return base64;
+    } catch (e) {
+      return '';
+    }
+  }
+  
+  function toAbsoluteUrl(url) {
+    if (!url) return '';
+    try {
+      return new URL(url, window.location.origin).href;
+    } catch (_) {
+      return url;
+    }
+  }
+  
+  function isNonShareableUrl(url) {
+    if (!url) return false;
+    return url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('file:');
+  }
+  
+  function decodeState(str) {
+    try {
+      const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+      const pad = base64.length % 4 === 0 ? '' : '='.repeat(4 - (base64.length % 4));
+      const binary = atob(base64 + pad);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const json = new TextDecoder().decode(bytes);
+      return JSON.parse(json);
+    } catch (e) {
+      return null;
+    }
+  }
+  
+  function getCurrentState() {
+    const state = {
+      profile: { name: currentProfile.name },
+      bg: { url: toAbsoluteUrl(currentBackground.url), name: currentBackground.name },
+      hotspots: hotspots.map(h => ({
+        x: h.x,
+        y: h.y,
+        color: h.color,
+        title: h.title,
+        description: h.description,
+        mediaUrl: isNonShareableUrl(h.mediaUrl) ? '' : toAbsoluteUrl(h.mediaUrl || ''),
+        icon: h.icon || 'plus'
+      }))
+    };
+    return state;
+  }
+  
+  function applyState(state) {
+    if (!state) return;
+    // Profile
+    if (state.profile && state.profile.name) {
+      currentProfile.name = state.profile.name;
+      updateProfileBadge();
+    }
+    // Background
+    if (state.bg && state.bg.url) {
+      setBackground(state.bg.url, state.bg.name || 'Shared Background', false);
+    }
+    // Clear existing hotspots
+    document.querySelectorAll('.hotspot').forEach(el => el.remove());
+    document.querySelectorAll('.popup').forEach(el => el.remove());
+    hotspots = [];
+    hotspotCounter = 1;
+    // Add hotspots
+    if (Array.isArray(state.hotspots)) {
+      state.hotspots.forEach(h => {
+        addHotspot(Number(h.x) || 0, Number(h.y) || 0, h.color || '#0064ff', h.title || '', h.description || '', h.mediaUrl || '', h.icon || 'plus');
+      });
+    }
+  }
+  
+  function initializeSnapshotFromQuery() {
+    const params = new URLSearchParams(window.location.search);
+    const stateParam = params.get('state');
+    if (!stateParam) return;
+    const state = decodeState(stateParam);
+    if (state) {
+      applyState(state);
+    }
+  }
+  
+  async function copySnapshotLink() {
+    const hint = document.getElementById('bgShareHint');
+    const state = getCurrentState();
+    const encoded = encodeState(state);
+    if (!encoded) {
+      if (hint) hint.textContent = 'Could not encode snapshot.';
+      return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    params.set('state', encoded);
+    // Optionally remove bgUrl/bgName when snapshot is present to shorten
+    params.delete('bgUrl');
+    params.delete('bgName');
+    const url = window.location.origin + window.location.pathname + '?' + params.toString();
+    try {
+      await navigator.clipboard.writeText(url);
+      if (hint) hint.textContent = 'Snapshot link copied!';
+      setTimeout(() => { if (hint) hint.textContent = currentBackground.isDataUrl ? 'Using local image. Share link will not include this file.' : 'Changes apply in real-time.'; }, 2000);
+    } catch (_) {
+      if (hint) hint.textContent = 'Unable to copy. Manually copy from address bar.';
+    }
   }
   
   function setMode(mode) {
@@ -793,7 +1894,7 @@
     }
   }
   
-  function updateHotspotInRealTime() {
+  function updateHotspotInRealTime(e) {
     if (!selectedHotspot) return;
     
     const x = parseFloat(document.getElementById('posX').value) || 0;
@@ -804,12 +1905,22 @@
     const title = document.getElementById('hotspotTitle').value;
     const description = document.getElementById('hotspotDescription').value;
     
-    // Get color value (prioritize hex input, fallback to color picker)
-    let color = colorHex.value;
-    if (!color || !isValidHexColor(color)) {
+    // Determine color source: if event came from color input or hex field, prioritize that
+    let color = colorPicker.value;
+    if (e && e.target && e.target.id === 'hotspotColorHex') {
+      const hex = colorHex.value.trim();
+      if (isValidHexColor(hex)) {
+        color = hex;
+        colorPicker.value = hex;
+      }
+    } else if (e && e.target && e.target.id === 'hotspotColor') {
+      colorHex.value = colorPicker.value;
       color = colorPicker.value;
-      colorHex.value = color;
     } else {
+      // No specific source: prefer valid hex, else picker
+      const hex = colorHex.value.trim();
+      color = isValidHexColor(hex) ? hex : colorPicker.value;
+      colorHex.value = color;
       colorPicker.value = color;
     }
     
@@ -870,6 +1981,7 @@
     
     // Show real-time update indicator
     showRealTimeIndicator();
+    updateSaveChangesButton();
   }
   
   function showRealTimeIndicator() {
@@ -1034,6 +2146,23 @@
     e.preventDefault();
   }
   
+  function dismissInstructionOverlay(e) {
+    e.stopPropagation();
+    const overlay = document.getElementById('instructionOverlay');
+    if (overlay) {
+      overlay.style.display = 'none';
+      try { localStorage.setItem('instructionOverlayDismissed', '1'); } catch (_) {}
+    }
+  }
+
+  function restoreInstructionOverlay() {
+    try {
+      const dismissed = localStorage.getItem('instructionOverlayDismissed') === '1';
+      const overlay = document.getElementById('instructionOverlay');
+      if (overlay) overlay.style.display = dismissed ? 'none' : 'block';
+    } catch (_) {}
+  }
+
 
   
   function saveHotspot() {
@@ -1091,17 +2220,13 @@
     cancelEdit();
   }
   
-  function handleFileUpload(event) {
+  async function handleFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const mediaUrl = e.target.result;
-      
+    try {
+      const mediaUrl = await uploadFileToServer(file);
       if (selectedHotspot) {
         selectedHotspot.dataset.mediaUrl = mediaUrl;
-        
         // Update popup in real-time
         const popupId = selectedHotspot.id.replace('hotspot', 'popup');
         const popup = document.getElementById(popupId);
@@ -1109,28 +2234,24 @@
           const popupContent = popup.querySelector('.popup-content');
           const title = selectedHotspot.dataset.title;
           const description = selectedHotspot.dataset.description;
-          
           let mediaContent = '';
           if (file.type.startsWith('image/')) {
             mediaContent = `<img src="${mediaUrl}" alt="${title}">`;
           } else if (file.type.startsWith('video/')) {
             mediaContent = `<video controls><source src="${mediaUrl}" type="${file.type}"></video>`;
           }
-          
           popupContent.innerHTML = `
             <h3>${title}</h3>
             <p>${description}</p>
             ${mediaContent}
           `;
         }
-        
         // Update stored data
         const hotspotData = hotspots.find(h => h.id === selectedHotspot.id);
         if (hotspotData) {
           hotspotData.mediaUrl = mediaUrl;
         }
       }
-      
       // Show preview
       const mediaPreview = document.getElementById('mediaPreview');
       if (file.type.startsWith('image/')) {
@@ -1138,9 +2259,19 @@
       } else if (file.type.startsWith('video/')) {
         mediaPreview.innerHTML = `<video controls style="max-width: 100px; max-height: 100px; border-radius: 5px;"><source src="${mediaUrl}" type="${file.type}"></video>`;
       }
-    };
-    
-    reader.readAsDataURL(file);
+      showToast('Media uploaded');
+    } catch (err) {
+      showToast('Upload failed. Try <=20MB.', true);
+    }
+  }
+
+  async function uploadFileToServer(file) {
+    const form = new FormData();
+    form.append('file', file);
+    const resp = await fetch('/api/upload', { method: 'POST', body: form });
+    if (!resp.ok) throw new Error('upload_failed');
+    const data = await resp.json();
+    return data.url;
   }
   
   function addNewHotspot() {

@@ -1,0 +1,35 @@
+app = "zmhotspot"
+primary_region = "den"
+
+[build]
+
+[env]
+  PORT = "8080"
+  UPLOAD_DIR = "/data/uploads"
+  MAX_STATE_BYTES = "262144"
+
+[[services]]
+  internal_port = 8080
+  protocol = "tcp"
+  processes = ["app"]
+
+  [[services.ports]]
+    handlers = ["http"]
+    port = 80
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port = 443
+
+  [services.concurrency]
+    hard_limit = 25
+    soft_limit = 20
+
+  [[services.tcp_checks]]
+    interval = "15s"
+    timeout = "2s"
+
+[[mounts]]
+  source = "data"
+  destination = "/data"
+
+
