@@ -48,6 +48,11 @@ const mem = { profiles: new Map(), states: new Map() };
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 
+// Redirect root to the editable hotspots page
+app.get('/', (req, res) => {
+  res.redirect('/projects/hotspots/editable-hotspot.html');
+});
+
 app.get('/api/profiles', async (req, res) => {
   if (useMemoryStore) {
     const rows = Array.from(mem.profiles.values()).sort((a,b)=> new Date(b.updated_at)-new Date(a.updated_at));
