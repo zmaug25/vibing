@@ -10,6 +10,7 @@ import { InterfaceConfig, EditableText } from '../data/interfaces';
 import AICompanion from './interfaces/AICompanion';
 import MobileAIAssistant from './interfaces/MobileAIAssistant';
 import CallRouting from './interfaces/CallRouting';
+import { autofillTexts } from './aiClient';
 
 interface InterfaceEditorProps {
   interfaceConfig: InterfaceConfig;
@@ -31,6 +32,19 @@ export default function InterfaceEditor({ interfaceConfig, onBack }: InterfaceEd
 
   const getText = (id: string) => {
     return texts.find(text => text.id === id)?.value || '';
+  };
+
+  const runAutofill = async () => {
+    try {
+      setIsExporting(true);
+      const values = await autofillTexts(interfaceConfig.id, texts);
+      setTexts((prev) => prev.map((t) => (values[t.id] ? { ...t, value: values[t.id] } : t)));
+    } catch (e) {
+      console.error('Autofill failed', e);
+      alert('Autofill failed. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const downloadPNG = async () => {
@@ -132,6 +146,9 @@ export default function InterfaceEditor({ interfaceConfig, onBack }: InterfaceEd
             >
               {isEditing ? <Eye className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
               {isEditing ? 'Preview' : 'Edit'}
+            </Button>
+            <Button onClick={runAutofill} variant="outline" disabled={isExporting}>
+              Auto-fill with AI
             </Button>
             <Button
               onClick={downloadPNG}

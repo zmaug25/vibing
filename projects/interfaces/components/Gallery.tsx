@@ -1,6 +1,9 @@
 import React from 'react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { Input } from './ui/input';
+import { autofillTexts } from './aiClient';
 import { Edit2, Plus } from 'lucide-react';
 import { interfaceConfigs, InterfaceConfig } from '../data/interfaces';
 import { ImageWithFallback } from './figma/ImageWithFallback';
@@ -10,6 +13,9 @@ interface GalleryProps {
 }
 
 export default function Gallery({ onSelectInterface }: GalleryProps) {
+  const [open, setOpen] = React.useState(false);
+  const [scenario, setScenario] = React.useState('');
+  const [working, setWorking] = React.useState(false);
   // Group interfaces by category
   const groupedInterfaces = interfaceConfigs.reduce((acc, config) => {
     if (!acc[config.category]) {
@@ -27,10 +33,50 @@ export default function Gallery({ onSelectInterface }: GalleryProps) {
             <h1 className="text-4xl font-bold mb-2">UI Interface Library</h1>
             <p className="text-gray-600">Choose an interface template to customize and export</p>
           </div>
-          <Button className="flex items-center gap-2" disabled>
-            <Plus className="w-4 h-4" />
-            Add New Interface
-          </Button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2" variant="outline">
+                <Plus className="w-4 h-4" />
+                Customize with AI
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Describe your scenario</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <Input
+                  placeholder="e.g., Call routing for a medical clinic after-hours"
+                  value={scenario}
+                  onChange={(e) => setScenario(e.target.value)}
+                />
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                  <Button
+                    onClick={async () => {
+                      if (!scenario.trim()) { setOpen(false); return; }
+                      try {
+                        setWorking(true);
+                        // For simplicity, apply to the first interface category item as a demo
+                        const first = interfaceConfigs[0];
+                        const fields = first.defaultTexts.map((t) => ({ ...t, value: `${t.value}\nContext: ${scenario}` }));
+                        const values = await autofillTexts(first.id, fields);
+                        // Override defaults so when user clicks Edit it shows the AI content
+                        first.defaultTexts = first.defaultTexts.map((t) => values[t.id] ? { ...t, value: values[t.id] } : t);
+                        setOpen(false);
+                      } finally {
+                        setWorking(false);
+                      }
+                    }}
+                    disabled={working}
+                  >
+                    {working ? 'Generating…' : 'Generate'}
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500">AI will rewrite the interface text to match your scenario. Open any template to see the changes.</p>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {Object.entries(groupedInterfaces).map(([category, configs]) => (
