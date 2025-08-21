@@ -717,12 +717,13 @@
       </div>
       <div class="modal-body">
         <div class="bg-form-group">
-          <label for="profilesNameInput">Profile name</label>
-          <input type="text" id="profilesNameInput" placeholder="e.g., Healthcare Demo A" />
-          <div class="bg-form-hint">Saves the current background and hotspots under this name.</div>
+          <label>Current profile</label>
+          <div id="currentProfileInfo" style="font-size:0.9em; color:#ccc;">None loaded</div>
         </div>
-        <div class="bg-form-group" style="display:flex; gap:10px;">
-          <button class="btn btn-accent" onclick="saveCurrentProfile()">Save current as profile</button>
+        <div class="bg-form-group" style="display:flex; gap:10px; flex-wrap: wrap;">
+          <button class="btn btn-accent" onclick="saveProfileChanges()" id="saveChangesBtn" disabled>Save changes</button>
+          <input type="text" id="profilesNameInput" placeholder="New profile name" style="flex:1; min-width: 200px;" />
+          <button class="btn btn-ghost" onclick="saveAsNewProfile()">Save as new</button>
         </div>
         <div class="bg-form-group">
           <label>Saved profiles</label>
@@ -1207,6 +1208,8 @@
     if (bgOverlay && bgOverlay.contains(modal)) {
       document.body.appendChild(modal);
     }
+    updateCurrentProfileInfo();
+    updateSaveChangesButton();
     const nameInput = document.getElementById('profilesNameInput');
     if (nameInput) nameInput.value = currentProfile.name || '';
     renderProfilesList();
@@ -1266,6 +1269,47 @@
       currentProfileId = id;
       profiles.push({ id, name, createdAt: new Date().toISOString(), state });
     }
+    saveProfilesToStorage(profiles);
+    renderProfilesList();
+  }
+
+  function updateCurrentProfileInfo() {
+    const info = document.getElementById('currentProfileInfo');
+    if (!info) return;
+    if (currentProfileId) {
+      info.textContent = `${currentProfile.name} (id: ${currentProfileId.slice(0, 8)}…)`;
+    } else {
+      info.textContent = 'None loaded';
+    }
+  }
+
+  function updateSaveChangesButton() {
+    const btn = document.getElementById('saveChangesBtn');
+    if (!btn) return;
+    btn.disabled = !currentProfileId;
+  }
+
+  function saveProfileChanges() {
+    if (!currentProfileId) return;
+    const profiles = loadProfilesFromStorage();
+    const idx = profiles.findIndex(p => p.id === currentProfileId);
+    if (idx === -1) return;
+    const state = getCurrentState();
+    const name = currentProfile.name || (state.profile && state.profile.name) || 'Untitled Profile';
+    profiles[idx] = { ...profiles[idx], name, state };
+    saveProfilesToStorage(profiles);
+    renderProfilesList();
+  }
+
+  function saveAsNewProfile() {
+    const nameInput = document.getElementById('profilesNameInput');
+    const name = (nameInput && nameInput.value.trim()) || `${currentProfile.name} (copy)` || 'New Profile';
+    const state = getCurrentState();
+    state.profile = state.profile || {};
+    state.profile.name = name;
+    const profiles = loadProfilesFromStorage();
+    const id = generateId();
+    profiles.push({ id, name, createdAt: new Date().toISOString(), state });
     saveProfilesToStorage(profiles);
     renderProfilesList();
   }
