@@ -1196,6 +1196,11 @@
   function openProfilesModal() {
     const modal = document.getElementById('profilesModal');
     if (!modal) return;
+    // Ensure the profiles modal is not inside a hidden parent (e.g., bgModal overlay)
+    const bgOverlay = document.getElementById('bgModal');
+    if (bgOverlay && bgOverlay.contains(modal)) {
+      document.body.appendChild(modal);
+    }
     const nameInput = document.getElementById('profilesNameInput');
     if (nameInput) nameInput.value = currentProfile.name || '';
     renderProfilesList();
