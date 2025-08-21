@@ -130,8 +130,8 @@ app.put('/api/profiles/:id', async (req, res) => {
     await client.query('begin');
     if (name) await client.query('update profiles set name=$1, updated_at=now() where id=$2', [name, id]);
     if (state) {
-      await client.query('insert into profile_states(profile_id, state) values($1, $2)
-        on conflict(profile_id) do update set state=excluded.state', [id, state]);
+      await client.query(`insert into profile_states(profile_id, state) values($1, $2)
+        on conflict(profile_id) do update set state=excluded.state`, [id, state]);
     }
     await client.query('commit');
     const { rows } = await client.query('select p.id, p.name, p.created_at, p.updated_at, s.state from profiles p left join profile_states s on s.profile_id = p.id where p.id = $1', [id]);
@@ -177,11 +177,12 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage, limits: { fileSize: 20 * 1024 * 1024 } }); // 20MB max per file
 
+// Expose uploads
+app.use('/uploads', express.static(uploadRoot));
+
 app.post('/api/upload', upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'no_file' });
   const rel = path.relative(publicDir, req.file.path);
-  // Expose via a static route
-  app.use('/uploads', express.static(uploadRoot));
   return res.json({ url: `/uploads/${path.basename(req.file.path)}` });
 });
 
