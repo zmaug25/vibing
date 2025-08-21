@@ -37,14 +37,23 @@ export default function InterfaceEditor({ interfaceConfig, onBack }: InterfaceEd
 
     setIsExporting(true);
     try {
-      const canvas = await html2canvas(frameRef.current, {
+      const node = frameRef.current;
+      // Ensure layout is fully flushed before snapshot
+      await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+
+      const rect = node.getBoundingClientRect();
+      const width = Math.max(node.scrollWidth, Math.ceil(rect.width));
+      const height = Math.max(node.scrollHeight, Math.ceil(rect.height));
+
+      const canvas = await html2canvas(node, {
         backgroundColor: '#ffffff',
-        scale: 2,
+        width: width || undefined,
+        height: height || undefined,
+        scale: Math.max(2, Math.ceil(window.devicePixelRatio || 1)),
         useCORS: true,
-        allowTaint: true,
+        allowTaint: false,
         logging: false,
-        imageTimeout: 0,
-        removeContainer: true,
+        foreignObjectRendering: true,
       });
 
       const fileName = `${interfaceConfig.id}-interface.png`;
