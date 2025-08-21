@@ -661,7 +661,6 @@
       <button class="btn btn-ghost" onclick="closeBackgroundModal()">Close</button>
       <div style="display:flex; gap:10px; align-items:center;">
         <span id="bgShareHint" class="bg-form-hint">Changes apply in real-time.</span>
-        <button class="btn btn-accent" onclick="copyShareLink()">Copy share link</button>
         <button class="btn btn-accent" onclick="copySnapshotLink()" title="Copy link with background + hotspots">Copy snapshot link</button>
       </div>
     </div>
@@ -1056,7 +1055,6 @@
       bgNameInput.addEventListener('input', () => {
         currentBackground.name = bgNameInput.value || 'Untitled';
         updateBackgroundBadge();
-        updateShareUrl();
       });
     }
     if (bgUrlInput) {
@@ -1064,7 +1062,6 @@
         const url = bgUrlInput.value.trim();
         if (url.length === 0) return;
         setBackground(url, bgNameInput.value || currentBackground.name, false);
-        updateShareUrl();
       });
     }
     if (bgFileInput) {
@@ -1171,31 +1168,7 @@
     badge.textContent = 'Background: ' + (currentBackground.name || 'Untitled');
   }
   
-  function updateShareUrl() {
-    // Only include bgUrl if not a data URL
-    if (!currentBackground || !currentBackground.url || currentBackground.isDataUrl) return;
-    const params = new URLSearchParams(window.location.search);
-    params.set('bgUrl', currentBackground.url);
-    if (currentBackground.name) params.set('bgName', currentBackground.name);
-    const newUrl = window.location.pathname + '?' + params.toString();
-    window.history.replaceState({}, '', newUrl);
-  }
-  
-  async function copyShareLink() {
-    const hint = document.getElementById('bgShareHint');
-    if (!currentBackground || !currentBackground.url) return;
-    if (currentBackground.isDataUrl && hint) {
-      hint.textContent = 'Local image cannot be shared via link. Use Image URL.';
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      if (hint) hint.textContent = 'Link copied! Share to let others see this background.';
-      setTimeout(() => { if (hint) hint.textContent = 'Changes apply in real-time.'; }, 2000);
-    } catch (_) {
-      if (hint) hint.textContent = 'Unable to copy. Manually copy the address bar.';
-    }
-  }
+  // (Share link removed; snapshot link supersedes it)
 
   // ===================== Snapshot Sharing =====================
   function encodeState(stateObj) {
