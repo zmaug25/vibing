@@ -1,19 +1,15 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
-import { Edit2, Plus } from 'lucide-react';
+import { Edit2, Sparkles } from 'lucide-react';
 import { interfaceConfigs, InterfaceConfig } from '../data/interfaces';
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from './ui/dialog';
-import { Textarea } from './ui/textarea';
 
 interface GalleryProps {
   onSelectInterface: (config: InterfaceConfig) => void;
 }
 
 export default function Gallery({ onSelectInterface }: GalleryProps) {
-  const [aiOpen, setAiOpen] = useState(false);
-  const [aiContext, setAiContext] = useState('');
   // Group interfaces by category
   const groupedInterfaces = interfaceConfigs.reduce((acc, config) => {
     if (!acc[config.category]) {
@@ -31,38 +27,10 @@ export default function Gallery({ onSelectInterface }: GalleryProps) {
             <h1 className="text-4xl font-bold mb-2">UI Interface Library</h1>
             <p className="text-gray-600">Choose an interface template to customize and export</p>
           </div>
-          <div className="flex items-center gap-3">
-            <Dialog open={aiOpen} onOpenChange={setAiOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline">Customize with AI</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Customize with AI</DialogTitle>
-                  <DialogDescription>
-                    Provide brief context describing how the AI should tailor the UI text and elements.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="mt-4">
-                  <label className="block text-sm font-medium mb-2">Context for customization</label>
-                  <Textarea
-                    value={aiContext}
-                    onChange={(e) => setAiContext(e.target.value)}
-                    placeholder="ex: Use a friendly tone, set industry to healthcare, emphasize compliance, prefer short CTAs"
-                    className="min-h-[120px]"
-                  />
-                </div>
-                <DialogFooter>
-                  <Button onClick={() => setAiOpen(false)} variant="outline">Close</Button>
-                  <Button onClick={() => setAiOpen(false)}>Continue</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-            <Button className="flex items-center gap-2" disabled>
-              <Plus className="w-4 h-4" />
-              Add New Interface
-            </Button>
-          </div>
+          <Button className="flex items-center gap-2" disabled>
+            <Sparkles className="w-4 h-4" />
+            Customize with AI
+          </Button>
         </div>
 
         {Object.entries(groupedInterfaces).map(([category, configs]) => (
